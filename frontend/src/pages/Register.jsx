@@ -171,12 +171,12 @@ const Register = () => {
   return (
     <div className="register-container">
       <div className="register-card">
-        <div className="register-header">
-          <img src={ccsLogo} alt="CCS Logo" style={{ height: 48, marginBottom: 8 }} />
-          <h1>CCS Research</h1>
-          <h2>Create your account</h2>
-          <p>Join our research community</p>
+        <div className="register-header" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+          <img src={ccsLogo} alt="CCS Logo" style={{ height: 48 }} />
+          <h1 style={{ margin: 0 }}>CCS Research</h1>
         </div>
+        <h2>Create your account</h2>
+        <p>Join our research community</p>
 
         <form onSubmit={handleSubmit} className="register-form">
           {error && (

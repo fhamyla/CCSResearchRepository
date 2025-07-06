@@ -54,12 +54,12 @@ const SignIn = () => {
   return (
     <div className="signin-container">
       <div className="signin-card">
-        <div className="signin-header">
-          <img src={ccsLogo} alt="CCS Logo" style={{ height: 48, marginBottom: 8 }} />
-          <h1>CCS Research</h1>
-          <h2>Sign in to your account</h2>
-          <p>Welcome back! Please sign in to continue</p>
+        <div className="signin-header" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+          <img src={ccsLogo} alt="CCS Logo" style={{ height: 48 }} />
+          <h1 style={{ margin: 0 }}>CCS Research</h1>
         </div>
+        <h2>Sign in to your account</h2>
+        <p>Welcome back! Please sign in to continue</p>
 
         <form onSubmit={handleSubmit} className="signin-form">
           {error && (
