@@ -22,6 +22,7 @@ import {
   FiDownload
 } from 'react-icons/fi';
 import '../../styles/Homepage.css';
+import ccsLogo from '../assets/ccslogo.png';
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -299,6 +300,7 @@ const Homepage = () => {
       <header className="header">
         <div className="header-content">
           <div className="logo-section">
+            <img src={ccsLogo} alt="CCS Logo" style={{ height: 48, marginRight: 12 }} />
             <h1>CCS Research Repository</h1>
           </div>
           <div className="header-actions">

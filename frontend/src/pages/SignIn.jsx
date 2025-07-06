@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/service';
 import '../../styles/SignIn.css';
+import ccsLogo from '../assets/ccslogo.png';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ const SignIn = () => {
     <div className="signin-container">
       <div className="signin-card">
         <div className="signin-header">
+          <img src={ccsLogo} alt="CCS Logo" style={{ height: 48, marginBottom: 8 }} />
           <h1>CCS Research</h1>
           <h2>Sign in to your account</h2>
           <p>Welcome back! Please sign in to continue</p>

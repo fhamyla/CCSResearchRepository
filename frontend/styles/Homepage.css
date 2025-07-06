@@ -1,32 +1,32 @@
 /* Homepage Styles with White and Purple Theme */
 :root {
-  --primary-color: #6a3093;  /* Purple */
-  --primary-light: #9370DB;  /* Medium Purple */
-  --primary-dark: #4A1D6E;   /* Dark Purple */
-  --primary-bg: #f8f9fa;
-  --accent-color: #a044ff;   /* Bright Purple */
-  --accent-hover: #8833dd;   /* Darker Purple */
+  --primary-color: #800000;  /* Maroon */
+  --primary-light: #a94442;  /* Lighter Maroon */
+  --primary-dark: #4b0000;   /* Dark Maroon */
+  --primary-bg: #f5f5f5;     /* Light Grey */
+  --accent-color: #b22222;   /* Firebrick/Accent Maroon */
+  --accent-hover: #a94442;   /* Lighter Maroon */
   --white: #ffffff;
-  --light-gray: #f8f9fa;
-  --medium-gray: #e9ecef;
-  --dark-gray: #6c757d;
-  --text-dark: #2c2c54;
-  --text-light: #6c757d;
+  --light-gray: #f5f5f5;
+  --medium-gray: #cccccc;
+  --dark-gray: #333333;
+  --text-dark: #333333;
+  --text-light: #888888;
   --success: #28a745;
   --warning: #ffc107;
   --danger: #dc3545;
   --info: #17a2b8;
-  --shadow: 0 4px 12px rgba(106, 48, 147, 0.15);  /* Purple shadow */
-  --shadow-light: 0 2px 8px rgba(106, 48, 147, 0.08);  /* Light purple shadow */
-  --shadow-heavy: 0 8px 24px rgba(106, 48, 147, 0.2);  /* Heavy purple shadow */
+  --shadow: 0 4px 12px rgba(128, 0, 0, 0.15);  /* Maroon shadow */
+  --shadow-light: 0 2px 8px rgba(128, 0, 0, 0.08);
+  --shadow-heavy: 0 8px 24px rgba(128, 0, 0, 0.2);
   --border-radius: 6px;
   --border-radius-small: 4px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --royal-velvet: #6a3093;  /* Same as primary-color for consistency */
-  --royal-velvet-light: #9370DB;  /* Same as primary-light */
-  --royal-velvet-bg: rgba(102, 51, 153, 0.08);  /* Light purple background */
-  --royal-velvet-dark: #4A1D6E;  /* Same as primary-dark */
-  --royal-accent: #a044ff;  /* Same as accent-color */
+  --royal-velvet: #800000;
+  --royal-velvet-light: #a94442;
+  --royal-velvet-bg: #f5f5f5;
+  --royal-velvet-dark: #4b0000;
+  --royal-accent: #b22222;
 }
 
 .homepage {
@@ -559,7 +559,7 @@
 }
 
 .results-count {
-  color: var(--royal-velvet);
+  color: #333333;
   font-size: 15px;
   font-weight: 600;
 }
@@ -1016,4 +1016,20 @@
   .stats-right {
     margin-top: 8px;
   }
+}
+
+.active-filters-header,
+.active-filters-list,
+.active-filter,
+.filter-section h4,
+.filter-btn,
+.filter-count,
+.filter-dropdown,
+.sdg-label,
+.sdg-selection-summary,
+.sdg-clear-btn,
+.clear-filters-btn,
+.clear-all-btn,
+.remove-filter {
+  color: #333333 !important;
 }

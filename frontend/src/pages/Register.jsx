@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/service';
 import '../../styles/Register.css';
+import ccsLogo from '../assets/ccslogo.png';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -171,6 +172,7 @@ const Register = () => {
     <div className="register-container">
       <div className="register-card">
         <div className="register-header">
+          <img src={ccsLogo} alt="CCS Logo" style={{ height: 48, marginBottom: 8 }} />
           <h1>CCS Research</h1>
           <h2>Create your account</h2>
           <p>Join our research community</p>

@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #800000 0%, #a94442 100%);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 12px rgba(102, 51, 153, 0.15);
@@ -112,7 +112,7 @@
   top: 0;
   height: 100%;
   width: 4px;
-  background: linear-gradient(to bottom, #667eea, #764ba2);
+  background: linear-gradient(to bottom, #800000, #a94442);
   border-radius: 4px;
 }
 
@@ -171,7 +171,7 @@
 
 .paper-tag {
   background: #e8f0fe;
-  color: #1a73e8;
+  color: #800000;
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 11px;
@@ -211,7 +211,7 @@
 }
 
 .edit-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #800000 0%, #a94442 100%);
   box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
   position: relative;
 }
@@ -253,7 +253,7 @@
 
 /* Upload Button */
 .upload-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #800000 0%, #a94442 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -269,7 +269,7 @@
 }
 
 .upload-button:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #a94442 0%, #800000 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(102, 51, 153, 0.3);
 }
@@ -342,7 +342,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #f0ebff;
-  border-top: 3px solid #764ba2;
+  border-top: 3px solid #a94442;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -405,7 +405,7 @@
   font-weight: 600;
   color: #4d2673;
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #800000 0%, #a94442 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -469,7 +469,7 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #800000;
   background-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
@@ -487,7 +487,7 @@
 
 .form-textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #800000;
   background-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
@@ -508,13 +508,13 @@
 }
 
 .file-drop-zone:hover {
-  border-color: #667eea;
+  border-color: #800000;
   background-color: #f0f7ff;
   transform: scale(1.01);
 }
 
 .file-drop-zone.drag-over {
-  border-color: #667eea;
+  border-color: #800000;
   background-color: #eef1ff;
   transform: scale(1.02);
   box-shadow: 0 8px 16px rgba(102, 126, 234, 0.1);
@@ -522,7 +522,7 @@
 
 .upload-icon {
   margin: 0 auto 16px;
-  color: #667eea;
+  color: #800000;
   font-size: 48px;
   animation: float 3s ease-in-out infinite;
 }
@@ -561,7 +561,7 @@
 
 .selected-file {
   background: #eef2ff;
-  border: 2px solid #667eea;
+  border: 2px solid #800000;
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -578,7 +578,7 @@
 }
 
 .file-icon {
-  color: #667eea;
+  color: #800000;
   font-size: 24px;
   display: flex;
   align-items: center;
@@ -647,7 +647,7 @@
 }
 
 .add-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #800000 0%, #a94442 100%);
   color: white;
   border: none;
   padding: 0 16px;
@@ -661,7 +661,7 @@
 }
 
 .add-button:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #a94442 0%, #800000 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
 }
@@ -675,7 +675,7 @@
 
 .tag-item {
   background: #eef2ff;
-  color: #4f46e5;
+  color: #800000;
   padding: 6px 14px 6px 10px;
   border-radius: 20px;
   font-size: 13px;
@@ -700,7 +700,7 @@
 .remove-tag {
   background: none;
   border: none;
-  color: #4f46e5;
+  color: #800000;
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -754,13 +754,13 @@
 
 .sdg-item.selected {
   background-color: #eef2ff;
-  border-color: #667eea;
+  border-color: #800000;
   box-shadow: 0 2px 6px rgba(102, 126, 234, 0.2);
 }
 
 .sdg-checkbox {
   margin: 0;
-  accent-color: #667eea;
+  accent-color: #800000;
   width: 16px;
   height: 16px;
 }
