@@ -55,7 +55,7 @@ const SignIn = () => {
     <div className="signin-container">
       <div className="signin-card">
         <div className="signin-header" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
-          <img src={ccsLogo} alt="CCS Logo" style={{ height: 48 }} />
+          <img src={ccsLogo} alt="CCS Logo" style={{ height: 64 }} />
           <h1 style={{ margin: 0 }}>CCS Research</h1>
         </div>
         <h2>Sign in to your account</h2>

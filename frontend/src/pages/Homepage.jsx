@@ -300,7 +300,7 @@ const Homepage = () => {
       <header className="header">
         <div className="header-content">
           <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src={ccsLogo} alt="CCS Logo" style={{ height: 48 }} />
+            <img src={ccsLogo} alt="CCS Logo" style={{ height: 64 }} />
             <h1 style={{ margin: 0 }}>CCS Research Repository</h1>
           </div>
           <div className="header-actions">
