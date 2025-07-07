@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcryptjs');
 const router = express.Router();
 
 // In-memory storage for OTPs (expires after 10 minutes)
@@ -231,8 +232,9 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Check password (no hashing as requested)
-    if (user.password !== password) {
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 

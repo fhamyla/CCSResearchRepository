@@ -25,7 +25,8 @@ async function seedAdminUser() {
       firstName: 'Admin',
       lastName: 'User',
       role: 'admin',
-      isEmailVerified: true
+      isEmailVerified: true,
+      studentId: 'ADMIN001'
     };
 
     // Hash the password
