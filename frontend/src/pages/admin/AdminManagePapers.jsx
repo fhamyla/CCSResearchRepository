@@ -388,48 +388,6 @@ const AdminManagePapers = () => {
             </div>
           </div>
 
-          {/* Statistics Cards */}
-          <div style={styles.statsGrid}>
-            <div style={styles.statCard}>
-              <div style={styles.statIcon}>
-                <FiBarChart />
-              </div>
-              <div style={styles.statContent}>
-                <h3 style={styles.statTitle}>Total Papers</h3>
-                <p style={styles.statValue}>{stats.totalPapers || 0}</p>
-              </div>
-            </div>
-            <div style={styles.statCard}>
-              <div style={styles.statIcon}>
-                <FiFileText />
-              </div>
-              <div style={styles.statContent}>
-                <h3 style={styles.statTitle}>Total Size</h3>
-                <p style={styles.statValue}>{formatFileSize(stats.totalSize || 0)}</p>
-              </div>
-            </div>
-            <div style={styles.statCard}>
-              <div style={styles.statIcon}>
-                <FiCalendar />
-              </div>
-              <div style={styles.statContent}>
-                <h3 style={styles.statTitle}>Recent Uploads</h3>
-                <p style={styles.statValue}>{stats.recentPapers?.length || 0}</p>
-              </div>
-            </div>
-            <div style={styles.statCard}>
-              <div style={styles.statIcon}>
-                <FiThumbsUp />
-              </div>
-              <div style={styles.statContent}>
-                <h3 style={styles.statTitle}>Total Engagement</h3>
-                <p style={styles.statValue}>
-                  {papers.reduce((sum, paper) => sum + (paper.likes || 0) + (paper.comments || 0), 0)}
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Search and Filter Controls */}
           <div style={styles.controlsContainer}>
             <div style={styles.searchContainer}>
@@ -873,13 +831,13 @@ const AdminManagePapers = () => {
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: '60vh',
-      color: '#663399'
+      color: '#800000'
     },
     loadingSpinner: {
       width: '50px',
       height: '50px',
       border: '4px solid #e9ecef',
-      borderTop: '4px solid #663399',
+      borderTop: '4px solid #800000',
       borderRadius: '50%',
       animation: 'spin 1s linear infinite',
       marginBottom: '20px'
@@ -912,7 +870,7 @@ const AdminManagePapers = () => {
       margin: 0
     },
     titleIcon: {
-      color: '#663399'
+      color: '#800000'
     },
     headerActions: {
       display: 'flex',
@@ -923,7 +881,7 @@ const AdminManagePapers = () => {
       alignItems: 'center',
       gap: '8px',
       padding: '10px 16px',
-      backgroundColor: '#663399',
+      backgroundColor: '#800000',
       color: 'white',
       border: 'none',
       borderRadius: '8px',
@@ -932,51 +890,6 @@ const AdminManagePapers = () => {
       fontWeight: '500',
       transition: 'all 0.3s ease',
       boxShadow: '0 2px 8px rgba(102, 51, 153, 0.1)'
-    },
-
-    // Statistics styles
-    statsGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-      gap: '20px',
-      marginBottom: '32px'
-    },
-    statCard: {
-      display: 'flex',
-      alignItems: 'center',
-      padding: '24px',
-      backgroundColor: 'white',
-      borderRadius: '12px',
-      boxShadow: '0 4px 12px rgba(102, 51, 153, 0.15)',
-      border: '1px solid #e9ecef',
-      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-    },
-    statIcon: {
-      width: '48px',
-      height: '48px',
-      backgroundColor: '#f8f5ff',
-      borderRadius: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: '#663399',
-      fontSize: '20px',
-      marginRight: '16px'
-    },
-    statContent: {
-      flex: 1
-    },
-    statTitle: {
-      fontSize: '14px',
-      fontWeight: '500',
-      color: '#6c757d',
-      margin: '0 0 4px 0'
-    },
-    statValue: {
-      fontSize: '24px',
-      fontWeight: 'bold',
-      color: '#2c2c54',
-      margin: 0
     },
 
     // Controls styles
@@ -1149,7 +1062,7 @@ const AdminManagePapers = () => {
       gap: '4px',
       padding: '4px 8px',
       backgroundColor: '#f8f5ff',
-      color: '#663399',
+      color: '#800000',
       fontSize: '12px',
       fontWeight: '500',
       borderRadius: '6px',
@@ -1309,7 +1222,7 @@ const AdminManagePapers = () => {
     checkbox: {
       width: '18px',
       height: '18px',
-      accentColor: '#663399',
+      accentColor: '#800000',
       cursor: 'pointer'
     },
 
@@ -1319,7 +1232,7 @@ const AdminManagePapers = () => {
       alignItems: 'center',
       gap: '8px',
       padding: '12px 24px',
-      backgroundColor: '#663399',
+      backgroundColor: '#800000',
       color: 'white',
       border: 'none',
       borderRadius: '8px',
@@ -1440,7 +1353,7 @@ const AdminManagePapers = () => {
             .admin-manage-papers input:focus,
             .admin-manage-papers textarea:focus,
             .admin-manage-papers select:focus {
-              border-color: #663399 !important;
+              border-color: #800000 !important;
               box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1) !important;
             }
             
@@ -1450,7 +1363,7 @@ const AdminManagePapers = () => {
             }
             
             .admin-manage-papers .action-button:hover {
-              background-color: #663399 !important;
+              background-color: #800000 !important;
               color: white !important;
             }
             
