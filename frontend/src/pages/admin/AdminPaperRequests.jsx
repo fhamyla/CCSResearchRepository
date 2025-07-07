@@ -182,7 +182,7 @@ const AdminPaperRequests = () => {
     <AdminLayout activeTab="paper-requests">
       <div className="admin-paper-requests">
         <div className="page-header">
-          <h1>Paper Access Requests</h1>
+          <h1 style={{ color: 'white' }}>Paper Access Requests</h1>
           <button onClick={loadRequests} className="refresh-btn">
             <FiRefreshCw size={16} /> Refresh
           </button>

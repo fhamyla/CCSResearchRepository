@@ -99,7 +99,7 @@
 .section-title {
   font-size: 20px;
   font-weight: 600;
-  color: #4d2673;
+  color: var(--maroon);
   margin: 0;
   position: relative;
   padding-left: 16px;
@@ -136,7 +136,7 @@
   padding: 14px 16px;
   border-bottom: 2px solid #e9ecef;
   font-weight: 600;
-  color: #4d2673;
+  color: var(--maroon);
   position: sticky;
   top: 0;
 }
@@ -159,7 +159,7 @@
 .paper-title {
   font-weight: 500;
   margin-bottom: 5px;
-  color: #4d2673;
+  color: var(--maroon);
 }
 
 .paper-tags {
@@ -314,7 +314,7 @@
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 12px;
-  color: #4d2673;
+  color: var(--maroon);
 }
 
 .empty-state-text {
@@ -403,7 +403,7 @@
 .modal-header h2 {
   font-size: 22px;
   font-weight: 600;
-  color: #4d2673;
+  color: var(--maroon);
   margin: 0;
   background: linear-gradient(135deg, #800000 0%, #a94442 100%);
   -webkit-background-clip: text;
@@ -446,7 +446,7 @@
 
 .form-label {
   font-weight: 500;
-  color: #4d2673;
+  color: var(--maroon);
   margin-bottom: 8px;
   font-size: 14px;
   display: flex;
@@ -536,7 +536,7 @@
 .upload-text {
   font-size: 18px;
   font-weight: 500;
-  color: #4d2673;
+  color: var(--maroon);
   margin-bottom: 8px;
 }
 
@@ -595,7 +595,7 @@
 
 .file-name {
   font-weight: 500;
-  color: #4d2673;
+  color: var(--maroon);
   margin-bottom: 4px;
   word-break: break-all;
 }
@@ -767,7 +767,7 @@
 
 .sdg-text {
   font-size: 14px;
-  color: #4d2673;
+  color: var(--maroon);
   font-weight: 500;
 }
 
