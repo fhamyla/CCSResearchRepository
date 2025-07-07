@@ -118,10 +118,6 @@ const AdminPendingApprovals = () => {
                       <FiUser size={20} />
                     </div>
                     <div className="user-details">
-                      <h3 className="user-email">{user.email}</h3>
-                      <p className="user-registered">
-                        Registered: {formatDate(user.createdAt)}
-                      </p>
                       <div className="user-meta">
                         <span className="status-badge status-pending">
                           {user.status || 'pending'}
@@ -264,13 +260,6 @@ const AdminPendingApprovals = () => {
 
         .user-details {
           flex: 1;
-        }
-
-        .user-email {
-          margin: 0 0 5px 0;
-          color: var(--royal-velvet);
-          font-size: 18px;
-          font-weight: 600;
         }
 
         .user-registered {

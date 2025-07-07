@@ -282,10 +282,6 @@ const AdminManageUsers = () => {
                             <div className="user-avatar">
                               <FiUser size={16} />
                             </div>
-                            <div>
-                              <div className="user-email">{user.email}</div>
-                              {isCurrentUser && <span className="current-user-badge">You</span>}
-                            </div>
                           </div>
                         </td>
                         <td>
@@ -402,8 +398,8 @@ const AdminManageUsers = () => {
         }
 
         .user-email {
-          font-weight: 500;
-          color: var(--text-dark);
+          font-weight: 700;
+          color: #fff;
         }
 
         .current-user-badge {
