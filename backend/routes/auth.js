@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
@@ -10,11 +11,16 @@ const otpStorage = new Map();
 // Email transporter setup
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.GMAIL,
     pass: process.env.GMAIL_PASSWORD
   }
 });
+
+console.log('GMAIL:', process.env.GMAIL);
+console.log('GMAIL_PASSWORD:', process.env.GMAIL_PASSWORD);
 
 // Helper function to generate 6-digit OTP
 const generateOTP = () => {
