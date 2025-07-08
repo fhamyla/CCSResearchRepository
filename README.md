@@ -1,6 +1,6 @@
-# CCSRE Backend
+# CCS Research Repository
 
-This is the backend service for the CCS Research Repository System. It provides RESTful APIs for user authentication, paper management, email notifications, and more.
+This is the github repo for the CCS Research Repository System. It provides RESTful APIs for user authentication, paper management, email notifications, and more.
 
 ## Features
 - User registration and authentication (with OTP email verification)
