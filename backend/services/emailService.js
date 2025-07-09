@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 
 // Email service functions
 const emailService = {
-  // Send paper access email with attachment
+  // Send paper access email WITHOUT attachment
   sendPaperAccessEmail: async (userEmail, paperData, paperContent, message) => {
     try {
       const emailOptions = {
@@ -34,7 +34,7 @@ const emailService = {
             
             ${message ? `<p><strong>Admin Message:</strong> ${message}</p>` : ''}
             
-            <p>You can find the requested paper attached to this email.</p>
+            <p>You can now preview the requested paper directly in the Research Repository System. <strong>No PDF is attached to this email.</strong></p>
             
             <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
               <h3 style="margin-top: 0; color: #555;">Paper Details:</h3>
@@ -51,14 +51,8 @@ const emailService = {
               This is an automated email, please do not reply.
             </p>
           </div>
-        `,
-        attachments: [
-          {
-            filename: paperData.filename || `${paperData.title}.pdf`,
-            content: paperContent,
-            contentType: paperData.contentType || 'application/pdf'
-          }
-        ]
+        `
+        // No attachments field
       };
 
       const info = await transporter.sendMail(emailOptions);

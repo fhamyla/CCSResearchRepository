@@ -220,13 +220,14 @@ router.get('/download/:fileId', async (req, res) => {
         if (isCoAuthor) {
           hasPermission = true;
         } else {
-          // Check if user has an approved PaperRequest for this paper
+          // Check if user has an approved paper request for this paper
           const PaperRequest = require('../models/PaperRequest');
           const approvedRequest = await PaperRequest.findOne({
-            paperId: file._id,
-            userId: userId,
+            paperId: new mongoose.Types.ObjectId(fileId),
+            userId: new mongoose.Types.ObjectId(userId),
             status: 'approved'
           });
+          
           if (approvedRequest) {
             hasPermission = true;
           }
@@ -241,9 +242,13 @@ router.get('/download/:fileId', async (req, res) => {
         isAdmin = true;
       }
     }
-    // Remove the security vulnerability - require userId for all previews
+    // If preview mode and no userId, allow (for admin panel preview)
+    if (preview === 'true' && !userId) {
+      hasPermission = true;
+      isAdmin = true;
+    }
     if (!hasPermission) {
-      return res.status(403).json({ message: 'Access denied. You need permission to download this paper.' });
+      return res.status(403).json({ message: 'Access denied. You need permission to preview this paper.' });
     }
 
     // Set response headers
@@ -372,6 +377,7 @@ router.put('/:fileId', async (req, res) => {
 // Get all papers for public display (homepage)
 router.get('/public', async (req, res) => {
   try {
+    const { userId } = req.query; // Get userId from query params
     const files = await gfs.find({}).toArray();
     
     // Get user IDs to fetch department information
@@ -382,29 +388,40 @@ router.get('/public', async (req, res) => {
       userDepartmentMap[user._id.toString()] = user.department;
     });
 
-    const papers = files.map(file => ({
-      id: file._id,
-      title: file.metadata.title,
-      journal: file.metadata.journal || 'Unknown Journal',
-      year: file.metadata.year || new Date().getFullYear().toString(),
-      publisher: file.metadata.publisher || '',
-      doi: file.metadata.doi || 'DOI link',
-      authors: file.metadata.authors || [],
-      abstract: file.metadata.description || 'No abstract available.',
-      tags: file.metadata.tags || [],
-      sdgs: file.metadata.sdgs || [],
-      impact: file.metadata.impact || (Math.random() * 2 + 3).toFixed(1), // Random rating 3-5
-      clarity: file.metadata.clarity || (Math.random() * 2 + 3).toFixed(1), // Random rating 3-5
-      likes: file.metadata.likes || 0,
-      dislikes: file.metadata.dislikes || 0,
-      comments: (file.metadata.paperComments || []).length,
-      citationCount: file.metadata.citationCount || 0,
-      downloadCount: file.metadata.downloadCount || 0,
-      uploadDate: file.metadata.uploadDate,
-      filename: file.filename,
-      size: file.metadata.size,
-      ownerDepartment: userDepartmentMap[file.metadata.userId] || 'Unknown'
-    }));
+    const papers = files.map(file => {
+      // Check if current user is a co-author
+      let isCoAuthor = false;
+      if (userId && file.metadata.authors) {
+        isCoAuthor = file.metadata.authors.some(author => 
+          author.userId === userId
+        );
+      }
+
+      return {
+        id: file._id,
+        title: file.metadata.title,
+        journal: file.metadata.journal || 'Unknown Journal',
+        year: file.metadata.year || new Date().getFullYear().toString(),
+        publisher: file.metadata.publisher || '',
+        doi: file.metadata.doi || 'DOI link',
+        authors: file.metadata.authors || [],
+        abstract: file.metadata.description || 'No abstract available.',
+        tags: file.metadata.tags || [],
+        sdgs: file.metadata.sdgs || [],
+        impact: file.metadata.impact || (Math.random() * 2 + 3).toFixed(1), // Random rating 3-5
+        clarity: file.metadata.clarity || (Math.random() * 2 + 3).toFixed(1), // Random rating 3-5
+        likes: file.metadata.likes || 0,
+        dislikes: file.metadata.dislikes || 0,
+        comments: (file.metadata.paperComments || []).length,
+        citationCount: file.metadata.citationCount || 0,
+        downloadCount: file.metadata.downloadCount || 0,
+        uploadDate: file.metadata.uploadDate,
+        filename: file.filename,
+        size: file.metadata.size,
+        ownerDepartment: userDepartmentMap[file.metadata.userId] || 'Unknown',
+        isCoAuthor: isCoAuthor // Add co-author flag
+      };
+    });
 
     res.json(papers);
   } catch (error) {
@@ -679,6 +696,7 @@ router.get('/:paperId/download-permission', async (req, res) => {
     } else {
       // Get user details to check role
       const user = await User.findById(userId);
+      
       if (!user) {
         reason = 'User not found';
       } else if (['admin', 'moderator'].includes(user.role)) {
@@ -689,21 +707,26 @@ router.get('/:paperId/download-permission', async (req, res) => {
         reason = 'Paper owner access';
       } else {
         // Check if user is a co-author
-        const isCoAuthor = file.metadata.authors && file.metadata.authors.some(author => author.userId === userId);
+        const isCoAuthor = file.metadata.authors && 
+                          file.metadata.authors.some(author => 
+                            author.userId === userId
+                          );
+        
         if (isCoAuthor) {
           canDownload = true;
           reason = 'Co-author access';
         } else {
-          // Check for approved PaperRequest
+          // Check if user has an approved paper request for this paper
           const PaperRequest = require('../models/PaperRequest');
           const approvedRequest = await PaperRequest.findOne({
-            paperId: file._id,
-            userId: userId,
+            paperId: new mongoose.Types.ObjectId(paperId),
+            userId: new mongoose.Types.ObjectId(userId),
             status: 'approved'
           });
+          
           if (approvedRequest) {
             canDownload = true;
-            reason = 'Access request approved';
+            reason = 'Approved paper request';
           } else {
             reason = 'You need to request access from the administrator to preview this paper';
           }

@@ -586,24 +586,31 @@ const ManagePapers = () => {
     setPreviewError('');
     setPreviewUrl('');
     try {
-      if (!userId) {
-        navigate('/signin');
-        return;
-      }
-      const permission = await paperService.checkDownloadPermission(paper.id, userId);
-      if (!permission.canDownload) {
-        setPreviewPaper(null);
-        setMessage(permission.reason || 'You need permission to preview this paper.');
-        setPreviewLoading(false);
-        return;
-      }
-      const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
-      if (!response || !response.data) throw new Error('No file data');
-      const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
-      const blob = new Blob([response.data], { type: contentType });
-      if (blob.size === 0) throw new Error('File is empty');
+      // If the user is the owner, allow preview without permission check
+      if (paper.isOwner) {
+        const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
+        if (!response || !response.data) throw new Error('No file data');
+        const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
+        const blob = new Blob([response.data], { type: contentType });
+        if (blob.size === 0) throw new Error('File is empty');
       const url = window.URL.createObjectURL(blob);
-      setPreviewUrl(url);
+        setPreviewUrl(url);
+      } else {
+        // Check permission for non-owners
+        const permission = await paperService.checkDownloadPermission(paper.id, userId);
+        if (!permission.canDownload) {
+          setPreviewPaper(null);
+          setMessage(permission.reason || 'You need permission to preview this paper.');
+          return;
+        }
+        const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
+        if (!response || !response.data) throw new Error('No file data');
+        const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
+        const blob = new Blob([response.data], { type: contentType });
+        if (blob.size === 0) throw new Error('File is empty');
+        const url = window.URL.createObjectURL(blob);
+        setPreviewUrl(url);
+      }
     } catch (error) {
       setPreviewError('Failed to load preview.');
     } finally {

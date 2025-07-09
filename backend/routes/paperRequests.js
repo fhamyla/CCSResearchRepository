@@ -122,24 +122,73 @@ router.put('/admin/requests/:requestId', requireAdminOrModerator, async (req, re
       return res.status(404).json({ message: 'Requesting user not found' });
     }
     
-    // Send status notification email
-    await emailService.sendRequestStatusEmail(
-      user.email,
-      request.paperTitle,
-      status,
-      adminMessage
-    );
-    
-    // If approved, increment download count but don't send paper via email
+    // If approved, send paper access email (no duplicate status email)
     if (status === 'approved') {
       // Increment download count in papers.files collection
       await mongoose.connection.db.collection('papers.files').updateOne(
         { _id: new mongoose.Types.ObjectId(request.paperId) },
         { $inc: { 'metadata.downloadCount': 1 } }
       );
+
+      // Find the paper in GridFS
+      const files = await gfs.find({ 
+        _id: new mongoose.Types.ObjectId(request.paperId) 
+      }).toArray();
+      
+      if (!files || files.length === 0) {
+        return res.status(404).json({ message: 'Paper not found' });
+      }
+      
+      const file = files[0];
+      
+      // Download file content from GridFS
+      const chunks = [];
+      const downloadStream = gfs.openDownloadStream(new mongoose.Types.ObjectId(request.paperId));
+      
+      downloadStream.on('data', (chunk) => {
+        chunks.push(chunk);
+      });
+      
+      downloadStream.on('error', (error) => {
+        return res.status(500).json({ message: 'Download failed', error: error.message });
+      });
+      
+      downloadStream.on('end', async () => {
+        try {
+          const paperContent = Buffer.concat(chunks);
+          
+          // Send approval email (no attachment)
+          await emailService.sendPaperAccessEmail(
+            user.email,
+            {
+              title: file.metadata.title,
+              authors: file.metadata.authors,
+              journal: file.metadata.journal,
+              year: file.metadata.year,
+              doi: file.metadata.doi,
+              filename: file.filename,
+              contentType: file.metadata.contentType
+            },
+            paperContent,
+            adminMessage
+          );
+          
+          res.json({ message: 'Request processed successfully' });
+        } catch (error) {
+          res.status(500).json({ message: 'Failed to send email', error: error.message });
+        }
+      });
+    } else {
+      // For rejected requests, send status notification email
+      await emailService.sendRequestStatusEmail(
+        user.email,
+        request.paperTitle,
+        status,
+        adminMessage
+      );
+      
+      res.json({ message: 'Request processed successfully' });
     }
-    
-    res.json({ message: 'Request processed successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

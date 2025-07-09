@@ -9,7 +9,6 @@ import AdminManagePapers from './pages/admin/AdminManagePapers';
 import AdminManageUsers from './pages/admin/AdminManageUsers';
 import AdminPendingApprovals from './pages/admin/AdminPendingApprovals';
 import AdminPaperRequests from './pages/admin/AdminPaperRequests';
-import MyPaperRequests from './pages/MyPaperRequests';
 import './App.css';
 
 function App() {
@@ -23,7 +22,6 @@ function App() {
           
           {/* User Routes */}
           <Route path="/manage-papers" element={<ManagePapers />} />
-          <Route path="/my-paper-requests" element={<MyPaperRequests />} />
           
           {/* Admin Routes */}
           <Route path="/admin/dashboard" element={<AdminDashboard />} />

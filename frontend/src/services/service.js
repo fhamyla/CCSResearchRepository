@@ -337,9 +337,10 @@ export const paperService = {
     }
   },
   // Get all papers for public display (homepage)
-  getPublicPapers: async () => {
+  getPublicPapers: async (userId = null) => {
     try {
-      const response = await api.get('/papers/public');
+      const params = userId ? { userId } : {};
+      const response = await api.get('/papers/public', { params });
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch papers' };
