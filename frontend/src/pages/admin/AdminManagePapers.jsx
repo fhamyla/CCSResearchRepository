@@ -18,10 +18,11 @@ import {
   FiCheck,
   FiBarChart,
   FiFilter,
-  FiRefreshCw
+  FiRefreshCw,
+  FiBookOpen
 } from 'react-icons/fi';
 import AdminLayout from '../../components/AdminLayout';
-import { paperService } from '../../services/service';
+import { paperService, userService } from '../../services/service';
 
 const AdminManagePapers = () => {
   const navigate = useNavigate();
@@ -53,6 +54,7 @@ const AdminManagePapers = () => {
   const [editLoading, setEditLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState(''); // success, error, info
+  const [users, setUsers] = useState({}); // Store user data for department lookup
 
   // Check if user is admin or moderator
   const checkAdminAccess = () => {
@@ -103,6 +105,23 @@ const AdminManagePapers = () => {
       
       setPapers(papersData || []);
       setStats(statsData || {});
+      
+      // Load user data for department lookup
+      const userData = {};
+      if (papersData) {
+        for (const paper of papersData) {
+          if (paper.userId && !userData[paper.userId]) {
+            try {
+              const user = await userService.getUserById(paper.userId);
+              userData[paper.userId] = user;
+            } catch (error) {
+              console.error('Error fetching user:', error);
+              userData[paper.userId] = { department: 'Unknown' };
+            }
+          }
+        }
+      }
+      setUsers(userData);
       
       if (!showLoader) {
         showMessage('Data refreshed successfully', 'success');
@@ -238,82 +257,9 @@ const AdminManagePapers = () => {
     }
   };
 
-  // Handle download paper
-  const handleDownload = async (paper) => {
-    try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (!user || !user.id) {
-        showMessage('Please sign in to download papers', 'error');
-        return;
-      }
-
-      // Check if user is admin or moderator
-      if (!['admin', 'moderator'].includes(user.role)) {
-        showMessage('Admin or moderator role required to download papers', 'error');
-        return;
-      }
-
-      showMessage('Starting download...', 'info');
-      
-      // Call the download service
-      const response = await paperService.downloadPaper(paper.id, user.id);
-      
-      // Check if response is valid
-      if (!response || !response.data) {
-        throw new Error('Invalid response from server');
-      }
-
-      // Get content type from headers
-      const contentType = response.headers['content-type'] || 
-                         response.headers['Content-Type'] || 
-                         'application/pdf';
-      
-      // Create blob and download
-      const blob = new Blob([response.data], { type: contentType });
-      
-      // Check if blob is valid
-      if (blob.size === 0) {
-        throw new Error('Downloaded file is empty');
-      }
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      // Generate filename - prefer paper filename, fallback to title
-      let filename = paper.filename;
-      if (!filename) {
-        const cleanTitle = paper.title ? paper.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'paper';
-        const extension = contentType.includes('pdf') ? 'pdf' : 'docx';
-        filename = `${cleanTitle}.${extension}`;
-      }
-      
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      showMessage('Download completed successfully', 'success');
-    } catch (error) {
-      console.error('Error downloading paper:', error);
-      let errorMessage = 'Download failed';
-      
-      if (error.response) {
-        // Server responded with error status
-        if (error.response.status === 403) {
-          errorMessage = 'Access denied. Admin privileges are required to download papers.';
-        } else if (error.response.status === 404) {
-          errorMessage = 'Paper file not found on server.';
-        } else if (error.response.data && error.response.data.message) {
-          errorMessage = error.response.data.message;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      showMessage(errorMessage, 'error');
-    }
+  // Preview handler (placeholder)
+  const handlePreview = (paper) => {
+    showMessage('Preview feature coming soon!', 'info');
   };
 
   // Utility functions
@@ -352,8 +298,16 @@ const AdminManagePapers = () => {
     }
   };
 
-  // Get filtered papers
+  // Show all papers (no isPublished filter)
   const filteredPapers = getFilteredAndSortedPapers();
+
+  // Add filter for department
+  const [departmentFilter, setDepartmentFilter] = useState('all');
+  const departmentFilteredPapers = filteredPapers.filter(paper => {
+    if (departmentFilter === 'all') return true;
+    const user = users[paper.userId];
+    return user && user.department === departmentFilter;
+  });
 
   // Main content renderer
   const renderContent = () => {
@@ -425,6 +379,15 @@ const AdminManagePapers = () => {
                 <option value="journal">Journal A-Z</option>
                 <option value="size">Largest First</option>
               </select>
+              <select
+                value={departmentFilter}
+                onChange={e => setDepartmentFilter(e.target.value)}
+                style={styles.filterSelect}
+              >
+                <option value="all">All Departments</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+              </select>
             </div>
           </div>
 
@@ -443,7 +406,7 @@ const AdminManagePapers = () => {
 
         {/* Papers List */}
         <div style={styles.papersContainer}>
-          {filteredPapers.length === 0 ? (
+          {departmentFilteredPapers.length === 0 ? (
             <div style={styles.emptyState}>
               <FiFileText style={styles.emptyIcon} />
               <h3 style={styles.emptyTitle}>
@@ -458,17 +421,17 @@ const AdminManagePapers = () => {
             </div>
           ) : (
             <div style={styles.papersGrid}>
-              {filteredPapers.map(paper => (
+              {departmentFilteredPapers.map(paper => (
                 <div key={paper.id} style={styles.paperCard}>
                   <div style={styles.paperHeader}>
                     <h3 style={styles.paperTitle}>{paper.title}</h3>
                     <div style={styles.paperActions}>
                       <button
-                        onClick={() => handleDownload(paper)}
+                        onClick={() => handlePreview(paper)}
                         style={styles.actionButton}
-                        title="Download paper"
+                        title="Preview research paper"
                       >
-                        <FiDownload />
+                        <FiBookOpen />
                       </button>
                       <button
                         onClick={() => handleEditClick(paper)}
@@ -515,6 +478,23 @@ const AdminManagePapers = () => {
                     <div style={styles.metaRow}>
                       <span style={styles.metaLabel}>Uploaded:</span>
                       <span style={styles.metaValue}>{formatDate(paper.uploadDate)}</span>
+                    </div>
+                    <div style={styles.metaRow}>
+                      <span style={styles.metaLabel}>Department:</span>
+                      <span style={styles.metaValue}>
+                        {users[paper.userId] ? users[paper.userId].department : 'Loading...'}
+                      </span>
+                    </div>
+                    <div style={styles.metaRow}>
+                      <span style={styles.metaLabel}>Status:</span>
+                      <span style={{
+                        ...styles.metaValue,
+                        color: paper.isPublished ? '#28a745' : '#dc3545',
+                        fontWeight: 'bold',
+                        marginLeft: 8
+                      }}>
+                        {paper.isPublished ? 'Published' : 'Unpublished'}
+                      </span>
                     </div>
                   </div>
 

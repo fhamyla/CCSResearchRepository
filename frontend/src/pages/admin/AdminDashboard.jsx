@@ -102,14 +102,6 @@ const AdminDashboard = () => {
 
           <div className="stat-card">
             <div className="stat-icon">
-              <FiAward size={28} />
-            </div>
-            <div className="stat-number">{stats.adminUsers || 0}</div>
-            <div className="stat-label">Administrators</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">
               <FiFileText size={28} />
             </div>
             <div className="stat-number">{stats.computerSciencePapers || 0}</div>
@@ -130,14 +122,6 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-number">{stats.totalCitations || 0}</div>
             <div className="stat-label">Total Citations</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">
-              <FiDownload size={28} />
-            </div>
-            <div className="stat-number">{stats.totalDownloads || 0}</div>
-            <div className="stat-label">Total Downloads</div>
           </div>
         </div>
 
