@@ -47,7 +47,7 @@
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: white;
+  color: white !important;
   margin: 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }

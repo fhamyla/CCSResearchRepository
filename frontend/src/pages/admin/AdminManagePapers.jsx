@@ -863,7 +863,7 @@ const AdminManagePapers = () => {
     title: {
       fontSize: '32px',
       fontWeight: 'bold',
-      color: '#2c2c54',
+      color: '#333333',
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
