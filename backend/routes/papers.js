@@ -668,7 +668,7 @@ router.get('/:paperId/download-permission', async (req, res) => {
     let reason = '';
 
     if (!userId) {
-      reason = 'Please sign in to download papers';
+      reason = 'Please sign in to preview papers';
     } else {
       // Get user details to check role
       const user = await User.findById(userId);
