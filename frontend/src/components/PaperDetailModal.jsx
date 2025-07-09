@@ -291,11 +291,12 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
 
                 <button
                   className="action-button preview-button"
-                  style={{ background: '#800000', color: 'white', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', marginRight: '6px' }}
+                  style={{ background: '#800000', color: 'white', width: 'auto', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', marginRight: '6px', padding: '0 16px', gap: '8px', fontWeight: 500 }}
                   title="Preview PDF"
                   onClick={handlePreviewClick}
                 >
                   <i className="fas fa-eye"></i>
+                  Preview PDF
                 </button>
                 {downloadPermission && !downloadPermission.canDownload && (
                   <p className="download-message">
