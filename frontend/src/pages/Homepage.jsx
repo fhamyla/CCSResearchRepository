@@ -53,6 +53,13 @@ const Homepage = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState('');
+  const [requestAccessMessage, setRequestAccessMessage] = useState('');
+  const [showRequestAccessModal, setShowRequestAccessModal] = useState(false);
+  const [requestingAccess, setRequestingAccess] = useState(false);
+  const [requestAccessResult, setRequestAccessResult] = useState('');
+  const [requestPaper, setRequestPaper] = useState(null);
+  const [requestReason, setRequestReason] = useState('');
+  const [requestStatus, setRequestStatus] = useState('');
 
   // Check if user is logged in when component mounts
   useEffect(() => {
@@ -212,21 +219,43 @@ const Homepage = () => {
   };
 
   const handlePreview = async (paper) => {
-    setPreviewPaper(paper);
-    setPreviewLoading(true);
-    setPreviewError('');
+    setPreviewPaper(null);
     setPreviewUrl('');
+    setPreviewError('');
+    setPreviewLoading(true);
+    setRequestAccessMessage('');
+    setShowRequestAccessModal(false);
+    setRequestAccessResult('');
+    setRequestPaper(null);
+    setRequestReason('');
+    setRequestStatus('');
     try {
-      // Check permission (reuse download permission logic if available)
-      const permission = await paperService.checkDownloadPermission(paper.id, user?.id);
-      if (!permission.canDownload) {
-        setPreviewPaper(null);
-        // Optionally, trigger request modal here
-        // setMessage(permission.reason || 'You need permission to preview this paper.'); // This line was not in the new_code, so I'm removing it.
+      if (!user?.id) {
+        navigate('/signin');
+        setPreviewLoading(false);
         return;
       }
-      // Fetch the paper file (assume PDF)
-      const response = await paperService.downloadPaper(paper.id, user?.id, true); // true = preview mode
+      // Check if user has a pending or rejected request
+      const userRequests = await paperService.getUserPaperRequests(user.id);
+      const thisRequest = userRequests.find(r => r.paperId === paper.id);
+      if (thisRequest && thisRequest.status !== 'approved') {
+        setRequestStatus(thisRequest.status);
+        setShowRequestAccessModal(true);
+        setRequestPaper(paper);
+        setPreviewLoading(false);
+        return;
+      }
+      const permission = await paperService.checkDownloadPermission(paper.id, user.id);
+      if (!permission.canDownload) {
+        setRequestAccessMessage(permission.reason || 'You need permission to preview this paper.');
+        setShowRequestAccessModal(true);
+        setRequestAccessResult('');
+        setRequestPaper(paper);
+        setPreviewLoading(false);
+        return;
+      }
+      setPreviewPaper(paper);
+      const response = await paperService.downloadPaper(paper.id, user.id, true); // true = preview mode
       if (!response || !response.data) throw new Error('No file data');
       const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
       const blob = new Blob([response.data], { type: contentType });
@@ -237,6 +266,21 @@ const Homepage = () => {
       setPreviewError('Failed to load preview.');
     } finally {
       setPreviewLoading(false);
+    }
+  };
+
+  const handleRequestAccess = async () => {
+    if (!user || !requestPaper || !requestReason.trim()) return;
+    setRequestingAccess(true);
+    setRequestAccessResult('');
+    try {
+      await paperService.requestPaperAccess(requestPaper.id, user.id, requestReason.trim(), requestPaper.title);
+      setRequestAccessResult('Request submitted! Please wait for admin approval.');
+      setRequestReason('');
+    } catch (error) {
+      setRequestAccessResult(error.message || 'Failed to submit request.');
+    } finally {
+      setRequestingAccess(false);
     }
   };
 
@@ -798,6 +842,37 @@ const Homepage = () => {
             ) : null}
           </div>
         </div>
+      </Modal>
+      {/* Request Access Modal */}
+      <Modal
+        isOpen={showRequestAccessModal}
+        onRequestClose={() => { setShowRequestAccessModal(false); setRequestReason(''); setRequestAccessResult(''); }}
+        contentLabel="Request Access"
+        style={{
+          overlay: { zIndex: 1000, background: 'rgba(0,0,0,0.5)' },
+          content: { maxWidth: '400px', margin: 'auto', padding: '32px', borderRadius: '12px', textAlign: 'center' }
+        }}
+        ariaHideApp={false}
+      >
+        <h2>Request Access</h2>
+        <p>{requestAccessMessage}</p>
+        <textarea
+          value={requestReason}
+          onChange={e => setRequestReason(e.target.value)}
+          placeholder="Please provide a reason for your request..."
+          rows={3}
+          style={{ width: '100%', margin: '12px 0', borderRadius: 6, border: '1px solid #ccc', padding: 8 }}
+          required
+        />
+        {requestAccessResult && <p style={{ color: requestAccessResult.includes('submitted') ? 'green' : 'red' }}>{requestAccessResult}</p>}
+        <button
+          onClick={handleRequestAccess}
+          style={{ marginTop: '16px', background: '#800000', color: 'white', border: 'none', borderRadius: '6px', padding: '8px 16px', cursor: requestReason.trim() ? 'pointer' : 'not-allowed' }}
+          disabled={requestingAccess || !!requestAccessResult || !requestReason.trim()}
+        >
+          {requestingAccess ? 'Requesting...' : 'Request Access'}
+        </button>
+        <button onClick={() => { setShowRequestAccessModal(false); setRequestReason(''); setRequestAccessResult(''); }} style={{ marginTop: '16px', marginLeft: '8px', background: '#aaa', color: 'white', border: 'none', borderRadius: '6px', padding: '8px 16px', cursor: 'pointer' }}>Close</button>
       </Modal>
     </div>
   );

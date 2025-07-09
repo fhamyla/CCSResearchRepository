@@ -270,7 +270,7 @@ const AdminManagePapers = () => {
     setPreviewError('');
     setPreviewUrl('');
     try {
-      // Fetch the paper file (assume PDF)
+      // For admin, allow preview without permission check
       const response = await paperService.downloadPaper(paper.id, null, true); // true = preview mode
       if (!response || !response.data) throw new Error('No file data');
       const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';

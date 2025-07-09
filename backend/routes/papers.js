@@ -219,6 +219,17 @@ router.get('/download/:fileId', async (req, res) => {
                           );
         if (isCoAuthor) {
           hasPermission = true;
+        } else {
+          // Check if user has an approved PaperRequest for this paper
+          const PaperRequest = require('../models/PaperRequest');
+          const approvedRequest = await PaperRequest.findOne({
+            paperId: file._id,
+            userId: userId,
+            status: 'approved'
+          });
+          if (approvedRequest) {
+            hasPermission = true;
+          }
         }
       }
     }
@@ -230,11 +241,7 @@ router.get('/download/:fileId', async (req, res) => {
         isAdmin = true;
       }
     }
-    // If preview mode and no userId, allow (for admin panel preview)
-    if (preview === 'true' && !userId) {
-      hasPermission = true;
-      isAdmin = true;
-    }
+    // Remove the security vulnerability - require userId for all previews
     if (!hasPermission) {
       return res.status(403).json({ message: 'Access denied. You need permission to download this paper.' });
     }
@@ -672,7 +679,6 @@ router.get('/:paperId/download-permission', async (req, res) => {
     } else {
       // Get user details to check role
       const user = await User.findById(userId);
-      
       if (!user) {
         reason = 'User not found';
       } else if (['admin', 'moderator'].includes(user.role)) {
@@ -682,7 +688,26 @@ router.get('/:paperId/download-permission', async (req, res) => {
         canDownload = true;
         reason = 'Paper owner access';
       } else {
-        reason = 'You need to request access from the administrator to download this paper';
+        // Check if user is a co-author
+        const isCoAuthor = file.metadata.authors && file.metadata.authors.some(author => author.userId === userId);
+        if (isCoAuthor) {
+          canDownload = true;
+          reason = 'Co-author access';
+        } else {
+          // Check for approved PaperRequest
+          const PaperRequest = require('../models/PaperRequest');
+          const approvedRequest = await PaperRequest.findOne({
+            paperId: file._id,
+            userId: userId,
+            status: 'approved'
+          });
+          if (approvedRequest) {
+            canDownload = true;
+            reason = 'Access request approved';
+          } else {
+            reason = 'You need to request access from the administrator to preview this paper';
+          }
+        }
       }
     }
 

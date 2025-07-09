@@ -30,6 +30,8 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
   const [interactionLoading, setInteractionLoading] = useState(false);
   const [downloadPermission, setDownloadPermission] = useState(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
 
   useEffect(() => {
     if (isOpen && paperId) {
@@ -167,17 +169,26 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
     }
   };
 
-  const handlePreviewClick = () => {
-    if (!downloadPermission?.canDownload) {
+  const handlePreviewClick = async () => {
+    // Check permission before preview
       if (!user) {
         navigate('/signin');
-      } else {
-        setIsRequestModalOpen(true);
-      }
       return;
     }
-    // Call the onPreview prop with the paper object
-    onPreview && onPreview(paper);
+    setPreviewLoading(true);
+    try {
+      const permission = await paperService.checkDownloadPermission(paper.id, user.id);
+      if (!permission.canDownload) {
+        setIsRequestModalOpen(true);
+        setPreviewLoading(false);
+        return;
+      }
+      onPreview && onPreview(paper);
+    } catch (error) {
+      setPreviewError('Failed to check permission.');
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   const handleRequestSubmit = async (paperId, reason) => {
@@ -289,15 +300,16 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
                   <span className="comments-count"><FiMessageCircle size={16} /> {paper.comments?.length || 0} Comments</span>
                 </div>
 
-                <button
+                <button 
                   className="action-button preview-button"
                   style={{ background: '#800000', color: 'white', width: 'auto', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', marginRight: '6px', padding: '0 16px', gap: '8px', fontWeight: 500 }}
                   title="Preview PDF"
                   onClick={handlePreviewClick}
+                  disabled={previewLoading}
                 >
-                  <i className="fas fa-eye"></i>
-                  Preview PDF
+                  {previewLoading ? 'Checking...' : 'Preview PDF'}
                 </button>
+                {previewError && <p className="error-message">{previewError}</p>}
                 {downloadPermission && !downloadPermission.canDownload && (
                   <p className="download-message">
                     <FiLock size={14} /> {downloadPermission.reason}
