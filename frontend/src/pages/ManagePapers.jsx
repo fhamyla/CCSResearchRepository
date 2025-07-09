@@ -586,22 +586,31 @@ const ManagePapers = () => {
     setPreviewError('');
     setPreviewUrl('');
     try {
-      // Check permission (reuse download permission logic if available)
-      const permission = await paperService.checkDownloadPermission(paper.id, userId);
-      if (!permission.canDownload) {
-        setPreviewPaper(null);
-        setMessage(permission.reason || 'You need permission to preview this paper.');
-        // Optionally, open request modal here
-        return;
+      // If the user is the owner, allow preview without permission check
+      if (paper.isOwner) {
+        const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
+        if (!response || !response.data) throw new Error('No file data');
+        const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
+        const blob = new Blob([response.data], { type: contentType });
+        if (blob.size === 0) throw new Error('File is empty');
+        const url = window.URL.createObjectURL(blob);
+        setPreviewUrl(url);
+      } else {
+        // Check permission for non-owners
+        const permission = await paperService.checkDownloadPermission(paper.id, userId);
+        if (!permission.canDownload) {
+          setPreviewPaper(null);
+          setMessage(permission.reason || 'You need permission to preview this paper.');
+          return;
+        }
+        const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
+        if (!response || !response.data) throw new Error('No file data');
+        const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
+        const blob = new Blob([response.data], { type: contentType });
+        if (blob.size === 0) throw new Error('File is empty');
+        const url = window.URL.createObjectURL(blob);
+        setPreviewUrl(url);
       }
-      // Fetch the paper file (assume PDF)
-      const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
-      if (!response || !response.data) throw new Error('No file data');
-      const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
-      const blob = new Blob([response.data], { type: contentType });
-      if (blob.size === 0) throw new Error('File is empty');
-      const url = window.URL.createObjectURL(blob);
-      setPreviewUrl(url);
     } catch (error) {
       setPreviewError('Failed to load preview.');
     } finally {

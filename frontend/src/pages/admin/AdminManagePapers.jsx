@@ -19,7 +19,8 @@ import {
   FiBarChart,
   FiFilter,
   FiRefreshCw,
-  FiBookOpen
+  FiBookOpen,
+  FiEye
 } from 'react-icons/fi';
 import AdminLayout from '../../components/AdminLayout';
 import { paperService, userService } from '../../services/service';
@@ -490,7 +491,7 @@ const AdminManagePapers = () => {
                         style={styles.actionButton}
                         title="Preview research paper"
                       >
-                        <FiBookOpen />
+                        <FiEye />
                       </button>
                       <button
                         onClick={() => handleEditClick(paper)}
