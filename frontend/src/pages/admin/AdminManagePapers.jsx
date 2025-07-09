@@ -545,17 +545,6 @@ const AdminManagePapers = () => {
                         {users[paper.userId] ? users[paper.userId].department : 'Loading...'}
                       </span>
                     </div>
-                    <div style={styles.metaRow}>
-                      <span style={styles.metaLabel}>Status:</span>
-                      <span style={{
-                        ...styles.metaValue,
-                        color: paper.isPublished ? '#28a745' : '#dc3545',
-                        fontWeight: 'bold',
-                        marginLeft: 8
-                      }}>
-                        {paper.isPublished ? 'Published' : 'Unpublished'}
-                      </span>
-                    </div>
                   </div>
 
                   {paper.tags && paper.tags.length > 0 && (
