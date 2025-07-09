@@ -177,17 +177,22 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Hash the password before saving
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     // Create new user with default 'user' role and 'pending' status
     const user = new User({ 
       email, 
-      password,
+      password: hashedPassword, // Use hashed password
       firstName,
       lastName,
       phoneNumber,
       department,
       studentId, 
       role: 'user', // Always default to 'user' role
-      status: 'pending' // Require admin approval
+      status: 'pending', // Require admin approval
+      isEmailVerified: true // Set to true since OTP was verified
     });
     await user.save();
 
@@ -232,15 +237,31 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('Login attempt for email:', email);
+    console.log('Password provided:', password ? 'Yes' : 'No');
+
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('User not found for email:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    console.log('User found:', {
+      id: user._id,
+      email: user.email,
+      status: user.status,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+      passwordHash: user.password ? 'Present' : 'Missing'
+    });
+
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match result:', isMatch);
+    
     if (!isMatch) {
+      console.log('Password does not match for user:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 

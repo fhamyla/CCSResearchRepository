@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
