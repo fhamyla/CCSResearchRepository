@@ -19,10 +19,12 @@ import {
   FiX,
   FiBookmark,
   FiBookOpen,
-  FiDownload
+  FiDownload,
+  FiEye
 } from 'react-icons/fi';
 import '../../styles/Homepage.css';
 import ccsLogo from '../assets/ccslogo.png';
+import Modal from 'react-modal';
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -47,6 +49,10 @@ const Homepage = () => {
     program: ''
   });
   const filtersRef = useRef(null);
+  const [previewPaper, setPreviewPaper] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
 
   // Check if user is logged in when component mounts
   useEffect(() => {
@@ -203,6 +209,41 @@ const Homepage = () => {
   const handleCloseCitationModal = () => {
     setIsCitationModalOpen(false);
     setSelectedPaperForCitation(null);
+  };
+
+  const handlePreview = async (paper) => {
+    setPreviewPaper(paper);
+    setPreviewLoading(true);
+    setPreviewError('');
+    setPreviewUrl('');
+    try {
+      // Check permission (reuse download permission logic if available)
+      const permission = await paperService.checkDownloadPermission(paper.id, user?.id);
+      if (!permission.canDownload) {
+        setPreviewPaper(null);
+        // Optionally, trigger request modal here
+        // setMessage(permission.reason || 'You need permission to preview this paper.'); // This line was not in the new_code, so I'm removing it.
+        return;
+      }
+      // Fetch the paper file (assume PDF)
+      const response = await paperService.downloadPaper(paper.id, user?.id, true); // true = preview mode
+      if (!response || !response.data) throw new Error('No file data');
+      const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
+      const blob = new Blob([response.data], { type: contentType });
+      if (blob.size === 0) throw new Error('File is empty');
+      const url = window.URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch (error) {
+      setPreviewError('Failed to load preview.');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closePreview = () => {
+    setPreviewPaper(null);
+    setPreviewUrl('');
+    setPreviewError('');
   };
 
   const filteredPapers = papers.filter(paper => {
@@ -684,7 +725,6 @@ const Homepage = () => {
                           (paper.comments.id ? String(paper.comments.id) : '0') : 
                           (paper.comments || '0'))}</span>
                       <span className="citations"><FiBookOpen size={16} /> {paper.citationCount || 0}</span>
-                      <span className="downloads"><FiDownload size={16} /> {paper.downloadCount || 0}</span>
                     </div>
                     <div className="stats-right">
                       <button 
@@ -711,6 +751,7 @@ const Homepage = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         user={user}
+        onPreview={handlePreview}
       />
 
       {/* Author Detail Modal */}
@@ -726,6 +767,38 @@ const Homepage = () => {
         isOpen={isCitationModalOpen}
         onClose={handleCloseCitationModal}
       />
+
+      {/* Preview Modal */}
+      <Modal
+        isOpen={!!previewPaper}
+        onRequestClose={closePreview}
+        contentLabel="Preview Research Paper"
+        style={{
+          overlay: { zIndex: 1000, background: 'rgba(0,0,0,0.5)' },
+          content: { maxWidth: '900px', margin: 'auto', height: '90vh', padding: '0', borderRadius: '12px', overflow: 'hidden' }
+        }}
+        ariaHideApp={false}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ padding: '16px', background: '#800000', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '18px' }}>Preview: {previewPaper?.title}</span>
+            <button onClick={closePreview} style={{ background: 'none', border: 'none', color: 'white', fontSize: '22px', cursor: 'pointer' }}>&times;</button>
+          </div>
+          <div style={{ flex: 1, background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {previewLoading ? (
+              <span style={{ color: 'white' }}>Loading preview...</span>
+            ) : previewError ? (
+              <span style={{ color: 'red' }}>{previewError}</span>
+            ) : previewUrl ? (
+              <iframe
+                src={previewUrl}
+                title="Research Paper Preview"
+                style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
+              />
+            ) : null}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { paperService, userService } from '../services/service';
 import { getSDGDescription } from '../utils/sdgUtils';
 import '../styles/ManagePapers.css';
+import Modal from 'react-modal';
 
 const ManagePapers = () => {
   const navigate = useNavigate();
@@ -37,6 +38,10 @@ const ManagePapers = () => {
   const [allUsers, setAllUsers] = useState([]); // For storing users from the database
   const [selectedUserId, setSelectedUserId] = useState(''); // For selected user as author
   const [authorSearchTerm, setAuthorSearchTerm] = useState(''); // New state for author search
+  const [previewPaper, setPreviewPaper] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
   
   // SDG options
   const sdgOptions = [
@@ -575,23 +580,39 @@ const ManagePapers = () => {
     }
   };
 
-  const handleDownload = async (paper) => {
+  const handlePreview = async (paper) => {
+    setPreviewPaper(paper);
+    setPreviewLoading(true);
+    setPreviewError('');
+    setPreviewUrl('');
     try {
-      const response = await paperService.downloadPaper(paper.id, userId);
-      
-      // Create blob and download
-      const blob = new Blob([response.data], { type: paper.contentType });
+      // Check permission (reuse download permission logic if available)
+      const permission = await paperService.checkDownloadPermission(paper.id, userId);
+      if (!permission.canDownload) {
+        setPreviewPaper(null);
+        setMessage(permission.reason || 'You need permission to preview this paper.');
+        // Optionally, open request modal here
+        return;
+      }
+      // Fetch the paper file (assume PDF)
+      const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
+      if (!response || !response.data) throw new Error('No file data');
+      const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
+      const blob = new Blob([response.data], { type: contentType });
+      if (blob.size === 0) throw new Error('File is empty');
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = paper.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      setPreviewUrl(url);
     } catch (error) {
-      setMessage('Download failed: ' + error.message);
+      setPreviewError('Failed to load preview.');
+    } finally {
+      setPreviewLoading(false);
     }
+  };
+
+  const closePreview = () => {
+    setPreviewPaper(null);
+    setPreviewUrl('');
+    setPreviewError('');
   };
 
   const handleDelete = async (paper) => {
@@ -823,12 +844,12 @@ const ManagePapers = () => {
                         </td>
                         <td className="actions-cell">
                           <button
-                            onClick={() => handleDownload(paper)
-                            }
-                            className="action-button download-button"
-                            title="Download Paper"
+                            onClick={() => handlePreview(paper)}
+                            className="action-button preview-button"
+                            title="Preview Paper"
+                            style={{ background: '#800000', color: 'white', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', marginRight: '6px' }}
                           >
-                            <i className="fas fa-download"></i>
+                            <i className="fas fa-eye"></i>
                           </button>
                           {/* Edit button is available for both owners and co-authors */}
                           {(paper.isOwner || paper.isCoAuthor) && (
@@ -857,6 +878,38 @@ const ManagePapers = () => {
               </div>
             )}
           </div>
+
+          {/* Preview Modal */}
+          <Modal
+            isOpen={!!previewPaper}
+            onRequestClose={closePreview}
+            contentLabel="Preview Research Paper"
+            style={{
+              overlay: { zIndex: 1000, background: 'rgba(0,0,0,0.5)' },
+              content: { maxWidth: '900px', margin: 'auto', height: '90vh', padding: '0', borderRadius: '12px', overflow: 'hidden' }
+            }}
+            ariaHideApp={false}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ padding: '16px', background: '#800000', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '18px' }}>Preview: {previewPaper?.title}</span>
+                <button onClick={closePreview} style={{ background: 'none', border: 'none', color: 'white', fontSize: '22px', cursor: 'pointer' }}>&times;</button>
+              </div>
+              <div style={{ flex: 1, background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {previewLoading ? (
+                  <span style={{ color: 'white' }}>Loading preview...</span>
+                ) : previewError ? (
+                  <span style={{ color: 'red' }}>{previewError}</span>
+                ) : previewUrl ? (
+                  <iframe
+                    src={previewUrl}
+                    title="Research Paper Preview"
+                    style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
+                  />
+                ) : null}
+              </div>
+            </div>
+          </Modal>
 
           {/* Upload Modal */}
           {showUploadModal && (

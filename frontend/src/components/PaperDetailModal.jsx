@@ -18,7 +18,7 @@ import {
   FiLock
 } from 'react-icons/fi';
 
-const PaperDetailModal = ({ paperId, isOpen, onClose, user }) => {
+const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
   const navigate = useNavigate();
   const [paper, setPaper] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -167,36 +167,17 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user }) => {
     }
   };
 
-  const handleDownload = async () => {
+  const handlePreviewClick = () => {
     if (!downloadPermission?.canDownload) {
       if (!user) {
         navigate('/signin');
       } else {
-        // Open request modal instead of showing alert
         setIsRequestModalOpen(true);
       }
       return;
     }
-
-    // Ensure we're using a primitive paperId
-    const id = typeof paperId === 'object' && paperId !== null ? paperId.id : paperId;
-
-    try {
-      const response = await paperService.downloadPaper(id, user.id);
-      
-      // Create blob and download
-      const blob = new Blob([response.data], { type: paper.contentType });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = paper.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      alert('Download failed: ' + error.message);
-    }
+    // Call the onPreview prop with the paper object
+    onPreview && onPreview(paper);
   };
 
   const handleRequestSubmit = async (paperId, reason) => {
@@ -308,12 +289,13 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user }) => {
                   <span className="comments-count"><FiMessageCircle size={16} /> {paper.comments?.length || 0} Comments</span>
                 </div>
 
-                <button 
-                  className="download-btn"
-                  onClick={handleDownload}
-                  disabled={!downloadPermission}
+                <button
+                  className="action-button preview-button"
+                  style={{ background: '#800000', color: 'white', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', marginRight: '6px' }}
+                  title="Preview PDF"
+                  onClick={handlePreviewClick}
                 >
-                  <FiDownload size={16} /> Download PDF
+                  <i className="fas fa-eye"></i>
                 </button>
                 {downloadPermission && !downloadPermission.canDownload && (
                   <p className="download-message">
