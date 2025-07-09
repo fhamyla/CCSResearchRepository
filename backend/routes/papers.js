@@ -191,29 +191,25 @@ router.get('/user/:userId', async (req, res) => {
 router.get('/download/:fileId', async (req, res) => {
   try {
     const { fileId } = req.params;
-    const { userId } = req.query;
+    const { userId, preview } = req.query;
 
     // Find the file
     const files = await gfs.find({ _id: new mongoose.Types.ObjectId(fileId) }).toArray();
-    
     if (!files || files.length === 0) {
       return res.status(404).json({ message: 'File not found' });
     }
-
     const file = files[0];
 
-    // Check if user has permission to download
+    // Check if user has permission to download or preview
     let hasPermission = false;
-    
+    let isAdmin = false;
     if (userId) {
       // Get user role to check if admin or moderator
       const user = await User.findById(userId);
-      
       if (user && ['admin', 'moderator'].includes(user.role)) {
-        // Admin and moderators can download any paper
         hasPermission = true;
+        isAdmin = true;
       } else if (file.metadata.userId === userId) {
-        // Owner can download their own paper
         hasPermission = true;
       } else {
         // Check if user is a co-author
@@ -226,7 +222,19 @@ router.get('/download/:fileId', async (req, res) => {
         }
       }
     }
-
+    // Allow preview for admins even if userId is not provided
+    if (preview === 'true' && userId) {
+      const user = await User.findById(userId);
+      if (user && ['admin', 'moderator'].includes(user.role)) {
+        hasPermission = true;
+        isAdmin = true;
+      }
+    }
+    // If preview mode and no userId, allow (for admin panel preview)
+    if (preview === 'true' && !userId) {
+      hasPermission = true;
+      isAdmin = true;
+    }
     if (!hasPermission) {
       return res.status(403).json({ message: 'Access denied. You need permission to download this paper.' });
     }
@@ -234,19 +242,15 @@ router.get('/download/:fileId', async (req, res) => {
     // Set response headers
     res.set({
       'Content-Type': file.metadata.contentType,
-      'Content-Disposition': `attachment; filename="${file.filename}"`
+      'Content-Disposition': preview === 'true' ? `inline; filename="${file.filename}"` : `attachment; filename="${file.filename}"`
     });
 
     // Create download stream
     const downloadStream = gfs.openDownloadStream(new mongoose.Types.ObjectId(fileId));
-    
     downloadStream.on('error', (error) => {
       res.status(500).json({ message: 'Download failed', error: error.message });
     });
-
-    // Pipe the file to response
     downloadStream.pipe(res);
-
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

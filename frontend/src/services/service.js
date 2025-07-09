@@ -300,9 +300,14 @@ export const paperService = {
   },
 
   // Download paper
-  downloadPaper: async (fileId, userId) => {
+  downloadPaper: async (fileId, userId, preview = false) => {
     try {
-      const response = await api.get(`/papers/download/${fileId}?userId=${userId}`, {
+      let url = `/papers/download/${fileId}`;
+      const params = [];
+      if (userId) params.push(`userId=${userId}`);
+      if (preview) params.push('preview=true');
+      if (params.length > 0) url += '?' + params.join('&');
+      const response = await api.get(url, {
         responseType: 'blob',
       });
       return response;
