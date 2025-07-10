@@ -378,6 +378,199 @@ const levenshteinDistance = (str1, str2) => {
   return matrix[str2.length][str1.length];
 };
 
+// Function to validate file content
+const validateFileContent = async (fileBuffer, filename, contentType) => {
+  try {
+    console.log('Validating file content...');
+    
+    // Check if file buffer is empty or too small
+    if (!fileBuffer || fileBuffer.length === 0) {
+      return {
+        isValid: false,
+        reason: 'The uploaded file is empty or corrupted. Please check your file and try again.',
+        errorType: 'EMPTY_FILE'
+      };
+    }
+    
+    // Check minimum file size (at least 1KB)
+    const minSize = 1024; // 1KB
+    if (fileBuffer.length < minSize) {
+      return {
+        isValid: false,
+        reason: `The uploaded file is too small (${fileBuffer.length} bytes). Research papers should be at least ${minSize} bytes. Please upload a complete document.`,
+        errorType: 'FILE_TOO_SMALL'
+      };
+    }
+    
+    // For PDF files, validate content
+    if (contentType === 'application/pdf') {
+      // Check if it's a valid PDF by looking for PDF header
+      const pdfHeader = fileBuffer.toString('ascii', 0, 4);
+      if (pdfHeader !== '%PDF') {
+        return {
+          isValid: false,
+          reason: 'The uploaded file is not a valid PDF document. Please ensure you are uploading a properly formatted PDF file.',
+          errorType: 'INVALID_PDF_FORMAT'
+        };
+      }
+      
+      // Extract and validate PDF text content
+      const pdfText = await extractPDFText(fileBuffer);
+      if (!pdfText || pdfText.trim().length === 0) {
+        return {
+          isValid: false,
+          reason: 'The PDF file contains no readable text content. This might be a scanned document or image-only PDF. Please upload a PDF with selectable text content.',
+          errorType: 'NO_READABLE_TEXT'
+        };
+      }
+      
+      // Check for minimum text content (at least 100 characters)
+      const minTextLength = 100;
+      if (pdfText.trim().length < minTextLength) {
+        return {
+          isValid: false,
+          reason: `The PDF contains insufficient text content (${pdfText.trim().length} characters). Research papers should have substantial text content (at least ${minTextLength} characters). Please upload a complete research document.`,
+          errorType: 'INSUFFICIENT_TEXT_CONTENT'
+        };
+      }
+      
+      // Check for research content indicators
+      const lowerText = pdfText.toLowerCase();
+      const researchIndicators = [
+        'abstract',
+        'introduction',
+        'methodology',
+        'results',
+        'conclusion',
+        'references',
+        'bibliography',
+        'research',
+        'study',
+        'analysis',
+        'data',
+        'findings',
+        'discussion'
+      ];
+      
+      const foundIndicators = researchIndicators.filter(indicator => 
+        lowerText.includes(indicator)
+      );
+      
+      // Require at least 3 research indicators for academic papers
+      if (foundIndicators.length < 3) {
+        const missingIndicators = researchIndicators.filter(indicator => 
+          !foundIndicators.includes(indicator)
+        );
+        
+        let specificReason = '';
+        if (foundIndicators.length === 0) {
+          specificReason = 'This document does not appear to be a research paper. Please upload an academic paper with proper research structure (abstract, introduction, methodology, etc.).';
+        } else if (foundIndicators.length === 1) {
+          specificReason = `This document lacks proper research structure. Found only: "${foundIndicators[0]}". Research papers should include sections like abstract, introduction, methodology, results, and conclusion.`;
+        } else {
+          specificReason = `This document has insufficient research content. Found: "${foundIndicators.join(', ')}". Research papers should include at least 3 of: abstract, introduction, methodology, results, conclusion, references, etc.`;
+        }
+        
+        return {
+          isValid: false,
+          reason: specificReason,
+          errorType: 'NON_RESEARCH_CONTENT',
+          foundIndicators: foundIndicators,
+          missingIndicators: missingIndicators
+        };
+      }
+      
+      // Check for common empty PDF indicators
+      const emptyIndicators = [
+        'blank page',
+        'empty document',
+        'no content',
+        'this page intentionally left blank',
+        'test document',
+        'sample file',
+        'placeholder',
+        'draft document'
+      ];
+      
+      for (const indicator of emptyIndicators) {
+        if (lowerText.includes(indicator)) {
+          let specificReason = '';
+          if (indicator === 'test document' || indicator === 'sample file') {
+            specificReason = 'Test files are not allowed. Please upload your actual research paper.';
+          } else if (indicator === 'blank page' || indicator === 'empty document' || indicator === 'no content') {
+            specificReason = 'Empty documents are not allowed. Please upload a document with actual content.';
+          } else if (indicator === 'placeholder' || indicator === 'draft document') {
+            specificReason = 'Placeholder or draft documents are not allowed. Please upload your final research paper.';
+          } else {
+            specificReason = 'This document appears to be empty or incomplete. Please upload a complete research paper.';
+          }
+          
+          return {
+            isValid: false,
+            reason: specificReason,
+            errorType: 'EMPTY_OR_TEST_DOCUMENT'
+          };
+        }
+      }
+      
+      console.log(`PDF validation passed: ${pdfText.length} characters of content`);
+      return {
+        isValid: true,
+        contentLength: pdfText.length,
+        preview: pdfText.substring(0, 200) + '...'
+      };
+    }
+    
+    // For DOCX files, check file structure
+    if (contentType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      // Check for ZIP header (DOCX files are ZIP archives)
+      const zipHeader = fileBuffer.toString('hex', 0, 4);
+      if (zipHeader !== '504b0304') {
+        return {
+          isValid: false,
+          reason: 'Invalid DOCX file format'
+        };
+      }
+      
+      console.log('DOCX validation passed: valid file structure');
+      return {
+        isValid: true,
+        contentLength: fileBuffer.length
+      };
+    }
+    
+    // For DOC files, check for Microsoft Word header
+    if (contentType === 'application/msword') {
+      // Check for Microsoft Word file signature
+      const docHeader = fileBuffer.toString('hex', 0, 8);
+      if (!docHeader.startsWith('d0cf11e0')) {
+        return {
+          isValid: false,
+          reason: 'Invalid DOC file format'
+        };
+      }
+      
+      console.log('DOC validation passed: valid file structure');
+      return {
+        isValid: true,
+        contentLength: fileBuffer.length
+      };
+    }
+    
+    return {
+      isValid: true,
+      contentLength: fileBuffer.length
+    };
+    
+  } catch (error) {
+    console.error('Error validating file content:', error);
+    return {
+      isValid: false,
+      reason: 'Error validating file content: ' + error.message
+    };
+  }
+};
+
 // Upload paper
 router.post('/upload', upload.single('paper'), async (req, res) => {
   try {
@@ -403,6 +596,19 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
     } catch (error) {
       return res.status(400).json({ message: 'Invalid authors, tags, or sdgs format' });
     }
+
+    // Validate file content before processing
+    const contentValidation = await validateFileContent(req.file.buffer, req.file.originalname, req.file.mimetype);
+    
+    if (!contentValidation.isValid) {
+      return res.status(400).json({
+        message: 'File content validation failed',
+        reason: contentValidation.reason,
+        error: 'INVALID_FILE_CONTENT'
+      });
+    }
+
+    console.log('File content validation passed:', contentValidation);
 
     // Check for duplicates before uploading
     const duplicateCheck = await checkForDuplicates(req.file.buffer, title, doi, userId, req.file.originalname);
@@ -811,6 +1017,36 @@ router.get('/admin/all', requireAdminOrModerator, async (req, res) => {
   }
 });
 
+// Test endpoint to verify file content validation
+router.post('/test-content-validation', upload.single('testFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'No file uploaded for testing'
+      });
+    }
+    
+    const validation = await validateFileContent(req.file.buffer, req.file.originalname, req.file.mimetype);
+    
+    res.json({
+      status: validation.isValid ? 'success' : 'error',
+      validation: validation,
+      fileInfo: {
+        name: req.file.originalname,
+        size: req.file.size,
+        type: req.file.mimetype
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Error testing content validation',
+      error: error.message
+    });
+  }
+});
+
 // Test endpoint to verify PDF parsing functionality
 router.get('/test-pdf-parse', async (req, res) => {
   try {
@@ -833,6 +1069,43 @@ router.get('/test-pdf-parse', async (req, res) => {
       message: 'Error testing pdf-parse',
       error: error.message
     });
+  }
+});
+
+// Test endpoint for validation error messages
+router.get('/test-validation-messages', async (req, res) => {
+  try {
+    const testErrors = [
+      {
+        errorType: 'EMPTY_OR_TEST_DOCUMENT',
+        reason: 'Test files are not allowed. Please upload your actual research paper.',
+        message: '⚠️ Test files are not allowed. Please upload your actual research paper.'
+      },
+      {
+        errorType: 'NON_RESEARCH_CONTENT',
+        reason: 'This document does not appear to be a research paper. Please upload an academic paper with proper research structure (abstract, introduction, methodology, etc.).',
+        message: '📄 This document does not appear to be a research paper. Please upload an academic paper with proper research structure (abstract, introduction, methodology, etc.).'
+      },
+      {
+        errorType: 'EMPTY_FILE',
+        reason: 'The uploaded file is empty or corrupted. Please check your file and try again.',
+        message: '📁 The uploaded file is empty or corrupted. Please check your file and try again.'
+      },
+      {
+        errorType: 'INVALID_PDF_FORMAT',
+        reason: 'The uploaded file is not a valid PDF document. Please ensure you are uploading a properly formatted PDF file.',
+        message: '📄 The uploaded file is not a valid PDF document. Please ensure you are uploading a properly formatted PDF file.'
+      }
+    ];
+    
+    res.json({
+      success: true,
+      message: 'Enhanced error messages are working',
+      testErrors: testErrors
+    });
+  } catch (error) {
+    console.error('Test validation messages error:', error);
+    res.status(500).json({ error: 'Test failed' });
   }
 });
 

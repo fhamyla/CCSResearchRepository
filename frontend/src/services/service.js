@@ -109,6 +109,49 @@ export const paperService = {
           isDuplicate: true
         };
       }
+      
+      // Handle file content validation error
+      if (error.response?.status === 400 && error.response?.data?.error === 'INVALID_FILE_CONTENT') {
+        throw {
+          ...error.response.data,
+          isInvalidContent: true
+        };
+      }
+      
+      // Handle specific validation error types
+      if (error.response?.status === 400 && error.response?.data?.errorType) {
+        const errorType = error.response.data.errorType;
+        let enhancedMessage = error.response.data.reason || error.response.data.message;
+        
+        // Add specific handling for different error types
+        switch (errorType) {
+          case 'EMPTY_OR_TEST_DOCUMENT':
+            enhancedMessage = `⚠️ ${enhancedMessage}`;
+            break;
+          case 'NON_RESEARCH_CONTENT':
+            enhancedMessage = `📄 ${enhancedMessage}`;
+            break;
+          case 'EMPTY_FILE':
+          case 'FILE_TOO_SMALL':
+            enhancedMessage = `📁 ${enhancedMessage}`;
+            break;
+          case 'INVALID_PDF_FORMAT':
+          case 'NO_READABLE_TEXT':
+          case 'INSUFFICIENT_TEXT_CONTENT':
+            enhancedMessage = `📄 ${enhancedMessage}`;
+            break;
+          default:
+            enhancedMessage = `❌ ${enhancedMessage}`;
+        }
+        
+        throw {
+          ...error.response.data,
+          message: enhancedMessage,
+          isValidationError: true,
+          errorType: errorType
+        };
+      }
+      
       throw error.response?.data || { message: 'Upload failed' };
     }
   },

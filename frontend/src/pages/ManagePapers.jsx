@@ -511,6 +511,12 @@ const ManagePapers = () => {
         } else {
           setMessage(duplicateMessage);
         }
+      } else if (error.isInvalidContent) {
+        // Handle file content validation error
+        setMessage(`File content validation failed: ${error.reason}`);
+      } else if (error.isValidationError) {
+        // Handle enhanced validation errors
+        setMessage(error.message);
       } else {
         setMessage('Upload failed: ' + error.message);
       }
@@ -752,6 +758,27 @@ const ManagePapers = () => {
     );
   };
 
+  const getAlertClass = (message) => {
+    if (message.includes('Duplicate paper detected')) {
+      return 'alert-warning';
+    } else if (message.includes('Error') || message.includes('failed') || message.includes('Invalid content')) {
+      return 'alert-error';
+    } else if (message.includes('successfully')) {
+      return 'alert-success';
+    } else if (message.includes('Test files are not allowed') || 
+               message.includes('Empty documents are not allowed') ||
+               message.includes('Placeholder or draft documents are not allowed') ||
+               message.includes('does not appear to be a research paper') ||
+               message.includes('lacks proper research structure') ||
+               message.includes('insufficient research content') ||
+               message.includes('⚠️') ||
+               message.includes('📄') ||
+               message.includes('📁')) {
+      return 'alert-error';
+    }
+    return 'alert-info'; // Default for other messages
+  };
+
   return (
     <div className="manage-papers-container">
       <div className="page-header">
@@ -778,7 +805,7 @@ const ManagePapers = () => {
       ) : (
         <>
           {message && (
-            <div className={`alert ${message.includes('Duplicate paper detected') ? 'alert-warning' : (message.includes('Error') || message.includes('failed') ? 'alert-error' : 'alert-success')}`}>
+            <div className={`alert ${getAlertClass(message)}`}>
               {message}
             </div>
           )}
