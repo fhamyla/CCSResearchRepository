@@ -82,14 +82,6 @@ const AdminActiveSDGs = () => {
             <div className="sdg-summary-number">{activeSDGs}</div>
             <div className="sdg-summary-label">Active SDGs</div>
           </div>
-          
-          <div className="sdg-summary-card">
-            <div className="sdg-summary-icon">
-              <FiFileText size={28} />
-            </div>
-            <div className="sdg-summary-number">{totalPapers}</div>
-            <div className="sdg-summary-label">Total Papers</div>
-          </div>
         </div>
 
         {/* SDG Statistics Grid */}
@@ -158,7 +150,7 @@ const AdminActiveSDGs = () => {
           }
 
           .sdg-summary-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #800020 0%, #8B0000 100%);
             border-radius: 12px;
             padding: 25px;
             color: white;
@@ -194,7 +186,7 @@ const AdminActiveSDGs = () => {
           }
 
           .sdg-stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #800020 0%, #8B0000 100%);
             border-radius: 12px;
             padding: 25px;
             color: white;
