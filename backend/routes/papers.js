@@ -448,8 +448,8 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
         lowerText.includes(indicator)
       );
       
-      // Require at least 3 research indicators for academic papers
-      if (foundIndicators.length < 3) {
+      // Require at least 4 research indicators for academic papers
+      if (foundIndicators.length < 4) {
         const missingIndicators = researchIndicators.filter(indicator => 
           !foundIndicators.includes(indicator)
         );
@@ -460,7 +460,7 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
         } else if (foundIndicators.length === 1) {
           specificReason = `This document lacks proper research structure. Found only: "${foundIndicators[0]}". Research papers should include sections like abstract, introduction, methodology, results, and conclusion.`;
         } else {
-          specificReason = `This document has insufficient research content. Found: "${foundIndicators.join(', ')}". Research papers should include at least 3 of: abstract, introduction, methodology, results, conclusion, references, etc.`;
+          specificReason = `This document has insufficient research content. Found: "${foundIndicators.join(', ')}". Research papers should include at least 4 of: abstract, introduction, methodology, results, conclusion, references, etc.`;
         }
         
         return {
@@ -1650,6 +1650,202 @@ router.post('/admin/update-content-fingerprints', requireAdminOrModerator, async
   } catch (error) {
     console.error('Error updating content fingerprints:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// --- PDF Analysis Endpoint ---
+// Helper: SDG keyword mapping
+const SDG_KEYWORDS = [
+  { id: 1, keywords: ["poverty", "income", "poor"] },
+  { id: 2, keywords: ["hunger", "food", "nutrition"] },
+  { id: 3, keywords: ["health", "well-being", "disease", "medicine"] },
+  { id: 4, keywords: ["education", "school", "learning", "literacy"] },
+  { id: 5, keywords: ["gender", "equality", "women", "girls"] },
+  { id: 6, keywords: ["water", "sanitation", "hygiene"] },
+  { id: 7, keywords: ["energy", "electricity", "renewable"] },
+  { id: 8, keywords: ["work", "employment", "economy", "growth"] },
+  { id: 9, keywords: ["industry", "infrastructure", "innovation"] },
+  { id: 10, keywords: ["inequality", "equal", "discrimination"] },
+  { id: 11, keywords: ["cities", "urban", "communities"] },
+  { id: 12, keywords: ["consumption", "production", "waste"] },
+  { id: 13, keywords: ["climate", "carbon", "emissions"] },
+  { id: 14, keywords: ["ocean", "marine", "sea", "water"] },
+  { id: 15, keywords: ["land", "biodiversity", "forests", "species"] },
+  { id: 16, keywords: ["peace", "justice", "institutions", "law"] },
+  { id: 17, keywords: ["partnership", "cooperation", "collaboration"] },
+];
+
+function detectSDGs(text) {
+  const lowerText = text.toLowerCase();
+  return SDG_KEYWORDS.filter(sdg =>
+    sdg.keywords.some(kw => lowerText.includes(kw))
+  ).map(sdg => sdg.id);
+}
+
+function extractTitle(text) {
+  // Heuristic: first non-empty line, not all uppercase, not 'abstract', not too short/long
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  
+  console.log('Analyzing lines for title extraction...');
+  console.log('First 10 lines:', lines.slice(0, 10));
+  
+  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+    const line = lines[i];
+    
+    // Skip common non-title lines
+    if (
+      line.length > 5 &&
+      line.length < 200 &&
+      !/^abstract$/i.test(line) &&
+      !/^introduction$/i.test(line) &&
+      !/^keywords?:?/i.test(line) &&
+      !/^summary$/i.test(line) &&
+      !/^conclusion$/i.test(line) &&
+      !/^references$/i.test(line) &&
+      !/^bibliography$/i.test(line) &&
+      !/^\d+$/.test(line) &&
+      !/^page\s*\d+$/i.test(line) &&
+      !/^doi:/i.test(line) &&
+      !/^issn:/i.test(line) &&
+      !/^isbn:/i.test(line) &&
+      line !== line.toUpperCase() &&
+      !/^[A-Z\s]+$/.test(line) // Skip lines that are all caps
+    ) {
+      console.log('Found potential title:', line);
+      return line;
+    }
+  }
+  
+  console.log('No suitable title found');
+  return '';
+}
+
+function extractAbstract(text) {
+  // Look for 'Abstract' section with multiple patterns
+  const patterns = [
+    /abstract[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?|summary|conclusion)/i,
+    /summary[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?|conclusion)/i,
+    /résumé[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?)/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const abstract = match[1].replace(/\n/g, ' ').trim();
+      console.log('Found abstract with pattern:', pattern.source);
+      console.log('Abstract length:', abstract.length);
+      return abstract;
+    }
+  }
+  
+  console.log('No abstract found');
+  return '';
+}
+
+function extractKeywords(text) {
+  // Look for 'Keywords' section with multiple patterns
+  const patterns = [
+    /keywords?:?[\s\n]*([\w\s,;\-\.]+?)(?=\n\s*\w|\n\n|introduction|abstract|summary)/i,
+    /key\s+words?:?[\s\n]*([\w\s,;\-\.]+?)(?=\n\s*\w|\n\n|introduction|abstract|summary)/i,
+    /index\s+terms?:?[\s\n]*([\w\s,;\-\.]+?)(?=\n\s*\w|\n\n|introduction|abstract|summary)/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const keywordsText = match[1].trim();
+      const keywords = keywordsText.split(/[,;\n]/).map(k => k.trim()).filter(k => k.length > 0);
+      console.log('Found keywords with pattern:', pattern.source);
+      console.log('Keywords found:', keywords);
+      return keywords;
+    }
+  }
+  
+  console.log('No keywords found');
+  return [];
+}
+
+router.post('/analyze-pdf', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  if (!pdfParse) {
+    return res.status(500).json({ error: 'PDF parsing not available' });
+  }
+  
+  try {
+    console.log('Starting PDF analysis for file:', req.file.originalname);
+    console.log('File size:', req.file.size, 'bytes');
+    
+    // First validate that this is actually a research paper
+    const contentValidation = await validateFileContent(req.file.buffer, req.file.originalname, req.file.mimetype);
+    
+    if (!contentValidation.isValid) {
+      console.log('Content validation failed:', contentValidation.reason);
+      return res.status(400).json({ 
+        error: contentValidation.reason,
+        errorType: contentValidation.errorType,
+        suggestion: 'Please upload a valid research paper document.'
+      });
+    }
+    
+    console.log('Content validation passed, proceeding with metadata extraction...');
+    
+    const data = await pdfParse(req.file.buffer);
+    const text = data.text || '';
+    
+    console.log('PDF text extracted successfully');
+    console.log('Text length:', text.length, 'characters');
+    console.log('First 200 characters:', text.substring(0, 200));
+    
+    if (!text || text.trim().length === 0) {
+      console.log('No text extracted from PDF - likely scanned document or image-based PDF');
+      return res.json({
+        title: '',
+        abstract: '',
+        keywords: [],
+        sdgs: [],
+        warning: 'No text could be extracted from this PDF. It may be a scanned document or image-based PDF.'
+      });
+    }
+    
+    const title = extractTitle(text);
+    const abstract = extractAbstract(text);
+    const keywords = extractKeywords(text);
+    const sdgs = detectSDGs(text);
+    
+    console.log('Extracted metadata:');
+    console.log('- Title:', title);
+    console.log('- Abstract length:', abstract.length);
+    console.log('- Keywords count:', keywords.length);
+    console.log('- SDGs detected:', sdgs);
+    
+    res.json({
+      title,
+      abstract,
+      keywords,
+      sdgs
+    });
+  } catch (err) {
+    console.error('PDF analysis failed:', err);
+    console.error('Error details:', err.message);
+    console.error('Error stack:', err.stack);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to analyze PDF';
+    if (err.message.includes('Invalid PDF')) {
+      errorMessage = 'The uploaded file is not a valid PDF or is corrupted';
+    } else if (err.message.includes('password')) {
+      errorMessage = 'The PDF is password-protected and cannot be analyzed';
+    } else if (err.message.includes('memory')) {
+      errorMessage = 'The PDF is too large or complex to analyze';
+    }
+    
+    res.status(500).json({ 
+      error: errorMessage, 
+      details: err.message,
+      suggestion: 'Please manually enter the paper details or try a different PDF file.'
+    });
   }
 });
 

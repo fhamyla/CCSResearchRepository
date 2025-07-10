@@ -35,6 +35,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/papers', papersRoutes);
 app.use('/api/paper-requests', paperRequestsRoutes);
 
+// The /api/papers/analyze-pdf endpoint is now available for PDF metadata extraction
+
 app.get('/', (req, res) => {
   res.send('Backend API is running!');
 });

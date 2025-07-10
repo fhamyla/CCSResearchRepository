@@ -585,6 +585,23 @@ export const paperService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update content fingerprints' };
     }
+  },
+
+  // Analyze PDF for metadata extraction
+  analyzePDF: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await api.post('/papers/analyze-pdf', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to analyze PDF' };
+    }
   }
 };
 

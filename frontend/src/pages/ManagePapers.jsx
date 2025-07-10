@@ -169,25 +169,67 @@ const ManagePapers = () => {
     }
   };
 
-  const handleFileSelect = (file) => {
+  const handleFileSelect = async (file) => {
     if (file) {
       // Check file type - only allow PDF
       const allowedTypes = ['application/pdf'];
-      
       if (!allowedTypes.includes(file.type)) {
         setMessage('Only PDF files are allowed');
         return;
       }
-      
       // Check file size (15MB limit)
       if (file.size > 15 * 1024 * 1024) {
         setMessage('File size must be less than 15MB');
         return;
       }
-      
       setSelectedFile(file);
-      setTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove extension for default title
-      setMessage('');
+      setMessage('Analyzing PDF for metadata...');
+      setLoading(true);
+      try {
+        // Use the paperService to ensure proper API URL configuration
+        const data = await paperService.analyzePDF(file);
+        
+        // Handle warning messages
+        if (data.warning) {
+          setMessage(`Warning: ${data.warning}. Please review and edit the extracted information.`);
+        } else {
+          setMessage('PDF analyzed successfully. Please review and edit the extracted information.');
+        }
+        
+        setTitle(data.title || '');
+        setAbstract(data.abstract || '');
+        setKeywordsList(Array.isArray(data.keywords) ? data.keywords : []);
+        setSelectedSDGs(Array.isArray(data.sdgs) ? data.sdgs : []);
+      } catch (err) {
+        console.error('PDF analysis error:', err);
+        let errorMessage = 'Could not auto-extract metadata from PDF. Please fill in the details manually.';
+        
+        if (err.message.includes('password-protected')) {
+          errorMessage = 'This PDF is password-protected and cannot be analyzed. Please enter the details manually.';
+        } else if (err.message.includes('not a valid PDF')) {
+          errorMessage = 'The uploaded file is not a valid PDF or is corrupted. Please try a different file.';
+        } else if (err.message.includes('too large')) {
+          errorMessage = 'The PDF is too large or complex to analyze. Please enter the details manually.';
+        } else if (err.message.includes('scanned document')) {
+          errorMessage = 'This appears to be a scanned document. Please enter the details manually.';
+        } else if (err.message.includes('research paper')) {
+          errorMessage = err.message; // Use the specific research paper validation error
+        } else if (err.message.includes('insufficient text content')) {
+          errorMessage = 'This document has insufficient text content. Please upload a complete research paper.';
+        } else if (err.message.includes('non-research content')) {
+          errorMessage = 'This document does not appear to be a research paper. Please upload an academic paper with proper research structure.';
+        } else if (err.message.includes('empty document') || err.message.includes('test document')) {
+          errorMessage = 'Empty or test documents are not allowed. Please upload your actual research paper.';
+        }
+        
+        setMessage(errorMessage);
+        setTitle('');
+        setAbstract('');
+        setKeywordsList([]);
+        setSelectedSDGs([]);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

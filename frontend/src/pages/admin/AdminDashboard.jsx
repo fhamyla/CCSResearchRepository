@@ -271,7 +271,7 @@ const AdminDashboard = () => {
         }
 
         .admin-btn {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #4A102A 0%, #85193C 25%, #C5172E 75%, #FCF259 100%);
           color: white;
           border: none;
           padding: 12px 20px;
@@ -283,19 +283,21 @@ const AdminDashboard = () => {
           align-items: center;
           gap: 8px;
           text-decoration: none;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .admin-btn:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
 
         .admin-btn-secondary {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          background: linear-gradient(135deg, #4A102A 0%, #85193C 25%, #C5172E 75%, #FCF259 100%);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .admin-btn-secondary:hover {
-          box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
 
         .admin-btn:disabled {
