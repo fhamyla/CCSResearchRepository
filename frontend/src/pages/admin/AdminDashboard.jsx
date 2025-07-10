@@ -16,7 +16,9 @@ import {
   FiDatabase,
   FiBook,
   FiDownload,
-  FiBookOpen
+  FiBookOpen,
+  FiGlobe,
+  FiTrendingUp
 } from 'react-icons/fi';
 
 const AdminDashboard = () => {
@@ -123,7 +125,11 @@ const AdminDashboard = () => {
             <div className="stat-number">{stats.totalCitations || 0}</div>
             <div className="stat-label">Total Citations</div>
           </div>
+
+
         </div>
+
+
 
         {/* Quick Actions */}
         <div className="admin-card">

@@ -9,6 +9,7 @@ import AdminManagePapers from './pages/admin/AdminManagePapers';
 import AdminManageUsers from './pages/admin/AdminManageUsers';
 import AdminPendingApprovals from './pages/admin/AdminPendingApprovals';
 import AdminPaperRequests from './pages/admin/AdminPaperRequests';
+import AdminActiveSDGs from './pages/admin/AdminActiveSDGs';
 import './App.css';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/admin/manage-users" element={<AdminManageUsers />} />
           <Route path="/admin/pending-approvals" element={<AdminPendingApprovals />} />
           <Route path="/admin/paper-requests" element={<AdminPaperRequests />} />
+          <Route path="/admin/active-sdgs" element={<AdminActiveSDGs />} />
         </Routes>
       </div>
     </Router>

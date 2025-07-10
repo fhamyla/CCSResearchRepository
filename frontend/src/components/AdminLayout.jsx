@@ -8,7 +8,8 @@ import {
   FiMenu,
   FiX,
   FiLogOut,
-  FiUser
+  FiUser,
+  FiGlobe
 } from 'react-icons/fi';
 import './AdminLayout.css';  const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
@@ -67,6 +68,11 @@ import './AdminLayout.css';  const AdminLayout = ({ children }) => {
       path: '/admin/manage-papers',
       name: 'Manage Papers',
       icon: FiFileText
+    },
+    {
+      path: '/admin/active-sdgs',
+      name: 'Active SDGs',
+      icon: FiGlobe
     }
   ];
 
