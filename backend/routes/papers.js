@@ -2,8 +2,18 @@ const express = require('express');
 const multer = require('multer');
 const { GridFSBucket } = require('mongodb');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const User = require('../models/User');
 const router = express.Router();
+
+// PDF parsing library (will be installed)
+let pdfParse;
+try {
+  pdfParse = require('pdf-parse');
+} catch (error) {
+  console.log('pdf-parse not installed. Content analysis will be limited.');
+  pdfParse = null;
+}
 
 // Middleware to check if user is admin or moderator
 const requireAdminOrModerator = async (req, res, next) => {
@@ -53,12 +63,329 @@ mongoose.connection.once('open', () => {
   });
 });
 
+// Function to extract text from PDF
+const extractPDFText = async (fileBuffer) => {
+  if (!pdfParse) {
+    console.log('pdf-parse not available - content analysis disabled');
+    return null; // Return null if pdf-parse is not available
+  }
+  
+  try {
+    console.log('Extracting PDF text...');
+    const data = await pdfParse(fileBuffer);
+    const text = data.text || '';
+    console.log(`PDF text extracted: ${text.length} characters`);
+    return text;
+  } catch (error) {
+    console.error('Error extracting PDF text:', error);
+    return null;
+  }
+};
+
+// Function to generate content fingerprint (simplified version)
+const generateContentFingerprint = (text) => {
+  if (!text) return null;
+  
+  // Remove common words, punctuation, and normalize
+  const normalizedText = text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ') // Remove punctuation
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+  
+  // Split into words and filter out common words
+  const commonWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+    'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
+    'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those',
+    'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them'
+  ]);
+  
+  const words = normalizedText.split(' ').filter(word => 
+    word.length > 3 && !commonWords.has(word)
+  );
+  
+  // Take first 100 significant words for fingerprint
+  const significantWords = words.slice(0, 100).sort();
+  return significantWords.join(' ');
+};
+
+// Function to calculate content similarity
+const calculateContentSimilarity = (text1, text2) => {
+  if (!text1 || !text2) return 0;
+  
+  const fingerprint1 = generateContentFingerprint(text1);
+  const fingerprint2 = generateContentFingerprint(text2);
+  
+  if (!fingerprint1 || !fingerprint2) return 0;
+  
+  // Use Jaccard similarity on word sets
+  const words1 = new Set(fingerprint1.split(' '));
+  const words2 = new Set(fingerprint2.split(' '));
+  
+  const intersection = new Set([...words1].filter(x => words2.has(x)));
+  const union = new Set([...words1, ...words2]);
+  
+  return intersection.size / union.size;
+};
+
+// Function to check for duplicate papers
+const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
+  try {
+    console.log('Starting duplicate check...');
+    
+    // Generate file hash for content-based duplicate detection
+    const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    console.log('File hash generated:', fileHash.substring(0, 10) + '...');
+    
+    // Extract PDF text for content analysis
+    const pdfText = await extractPDFText(fileBuffer);
+    console.log('PDF text available:', !!pdfText, 'Length:', pdfText ? pdfText.length : 0);
+    
+    // Check for exact file content match
+    const existingFiles = await gfs.find({}).toArray();
+    console.log('Checking against', existingFiles.length, 'existing papers');
+    
+    for (const file of existingFiles) {
+      // Check file hash if available in metadata
+      if (file.metadata.fileHash && file.metadata.fileHash === fileHash) {
+        console.log('Exact file hash match found');
+        return {
+          isDuplicate: true,
+          reason: 'Duplicate file content detected',
+          existingPaper: {
+            id: file._id,
+            title: file.metadata.title,
+            authors: file.metadata.authors,
+            uploadDate: file.metadata.uploadDate
+          }
+        };
+      }
+    }
+    
+    // Check for duplicate title by the same user (case-insensitive)
+    if (title) {
+      const titleDuplicate = await gfs.find({ 
+        'metadata.userId': userId 
+      }).toArray();
+      
+      // Check for exact title match (case-insensitive)
+      const exactMatch = titleDuplicate.find(file => 
+        file.metadata.title && 
+        file.metadata.title.toLowerCase().trim() === title.toLowerCase().trim()
+      );
+      
+      if (exactMatch) {
+        return {
+          isDuplicate: true,
+          reason: 'You have already uploaded a paper with this title',
+          existingPaper: {
+            id: exactMatch._id,
+            title: exactMatch.metadata.title,
+            authors: exactMatch.metadata.authors,
+            uploadDate: exactMatch.metadata.uploadDate
+          }
+        };
+      }
+    }
+    
+    // Check for duplicate DOI
+    if (doi && doi.trim() !== '') {
+      const doiDuplicate = await gfs.find({ 'metadata.doi': doi }).toArray();
+      
+      if (doiDuplicate.length > 0) {
+        return {
+          isDuplicate: true,
+          reason: 'A paper with this DOI already exists',
+          existingPaper: {
+            id: doiDuplicate[0]._id,
+            title: doiDuplicate[0].metadata.title,
+            authors: doiDuplicate[0].metadata.authors,
+            doi: doiDuplicate[0].metadata.doi,
+            uploadDate: doiDuplicate[0].metadata.uploadDate
+          }
+        };
+      }
+    }
+    
+    // Check for duplicate filename by the same user
+    if (filename) {
+      const filenameDuplicate = await gfs.find({ 
+        'metadata.userId': userId,
+        'filename': filename 
+      }).toArray();
+      
+      if (filenameDuplicate.length > 0) {
+        return {
+          isDuplicate: true,
+          reason: 'You have already uploaded a file with this name',
+          existingPaper: {
+            id: filenameDuplicate[0]._id,
+            title: filenameDuplicate[0].metadata.title,
+            authors: filenameDuplicate[0].metadata.authors,
+            uploadDate: filenameDuplicate[0].metadata.uploadDate
+          }
+        };
+      }
+    }
+    
+    // Check for similar titles (fuzzy matching)
+    if (title) {
+      const allPapers = await gfs.find({}).toArray();
+      for (const paper of allPapers) {
+        if (paper.metadata.title) {
+          const similarity = calculateSimilarity(title.toLowerCase(), paper.metadata.title.toLowerCase());
+          if (similarity > 0.9) { // 90% similarity threshold
+            return {
+              isDuplicate: true,
+              reason: 'A very similar paper title already exists',
+              existingPaper: {
+                id: paper._id,
+                title: paper.metadata.title,
+                authors: paper.metadata.authors,
+                uploadDate: paper.metadata.uploadDate
+              }
+            };
+          }
+        }
+      }
+    }
+    
+    // Check for similar content (PDF text analysis)
+    if (pdfText && pdfText.length > 100) { // Only check if we have substantial text
+      console.log('Starting content similarity analysis...');
+      const allPapers = await gfs.find({}).toArray();
+      for (const paper of allPapers) {
+        // Skip if it's the same user's paper (allow updates)
+        if (paper.metadata.userId === userId) continue;
+        
+        let existingContentFingerprint = paper.metadata.contentFingerprint;
+        console.log(`Paper ${paper.metadata.title}: has fingerprint: ${!!existingContentFingerprint}`);
+        
+        // If paper doesn't have stored content fingerprint, extract it on-the-fly
+        if (!existingContentFingerprint && paper.metadata.contentType === 'application/pdf') {
+          console.log(`Extracting content fingerprint for paper: ${paper.metadata.title}`);
+          try {
+            // Download the existing paper content
+            const downloadStream = gfs.openDownloadStream(paper._id);
+            const chunks = [];
+            
+            await new Promise((resolve, reject) => {
+              downloadStream.on('data', (chunk) => {
+                chunks.push(chunk);
+              });
+              
+              downloadStream.on('end', async () => {
+                try {
+                  const existingFileBuffer = Buffer.concat(chunks);
+                  const existingPdfText = await extractPDFText(existingFileBuffer);
+                  if (existingPdfText) {
+                    existingContentFingerprint = generateContentFingerprint(existingPdfText);
+                    console.log(`Generated fingerprint for ${paper.metadata.title}: ${existingContentFingerprint ? 'success' : 'failed'}`);
+                    
+                    // Store the fingerprint for future use
+                    await mongoose.connection.db.collection('papers.files').updateOne(
+                      { _id: paper._id },
+                      { $set: { 'metadata.contentFingerprint': existingContentFingerprint } }
+                    );
+                  }
+                  resolve();
+                } catch (error) {
+                  console.error('Error processing existing paper content:', error);
+                  resolve();
+                }
+              });
+              
+              downloadStream.on('error', (error) => {
+                console.error('Error downloading existing paper:', error);
+                resolve();
+              });
+            });
+          } catch (error) {
+            console.error('Error processing paper for content comparison:', error);
+            continue;
+          }
+        }
+        
+        // Now compare content fingerprints
+        if (existingContentFingerprint) {
+          const contentSimilarity = calculateContentSimilarity(pdfText, existingContentFingerprint);
+          console.log(`Content similarity with ${paper.metadata.title}: ${contentSimilarity.toFixed(3)}`);
+          if (contentSimilarity > 0.7) { // 70% content similarity threshold
+            console.log('High content similarity detected!');
+            return {
+              isDuplicate: true,
+              reason: 'Very similar paper content detected',
+              existingPaper: {
+                id: paper._id,
+                title: paper.metadata.title,
+                authors: paper.metadata.authors,
+                uploadDate: paper.metadata.uploadDate
+              }
+            };
+          }
+        }
+      }
+    } else {
+      console.log('Skipping content analysis - insufficient text or no PDF text available');
+    }
+    
+    console.log('Duplicate check completed - no duplicates found');
+    return { isDuplicate: false };
+  } catch (error) {
+    console.error('Error checking for duplicates:', error);
+    return { isDuplicate: false };
+  }
+};
+
+// Function to calculate string similarity (simple implementation)
+const calculateSimilarity = (str1, str2) => {
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+  
+  if (longer.length === 0) return 1.0;
+  
+  const editDistance = levenshteinDistance(longer, shorter);
+  return (longer.length - editDistance) / longer.length;
+};
+
+// Levenshtein distance calculation
+const levenshteinDistance = (str1, str2) => {
+  const matrix = [];
+  
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+};
+
 // Upload paper
 router.post('/upload', upload.single('paper'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
-    }    const { userId, title, description, journal, year, authors, tags, doi, publisher, sdgs } = req.body;
+    }
+    
+    const { userId, title, description, journal, year, authors, tags, doi, publisher, sdgs } = req.body;
     
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
@@ -75,7 +402,28 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
       if (sdgs) parsedSDGs = JSON.parse(sdgs);
     } catch (error) {
       return res.status(400).json({ message: 'Invalid authors, tags, or sdgs format' });
-    }    // Create upload stream
+    }
+
+    // Check for duplicates before uploading
+    const duplicateCheck = await checkForDuplicates(req.file.buffer, title, doi, userId, req.file.originalname);
+    
+    if (duplicateCheck.isDuplicate) {
+      return res.status(409).json({
+        message: 'Duplicate paper detected',
+        reason: duplicateCheck.reason,
+        existingPaper: duplicateCheck.existingPaper,
+        error: 'DUPLICATE_PAPER'
+      });
+    }
+
+    // Generate file hash for future duplicate detection
+    const fileHash = crypto.createHash('sha256').update(req.file.buffer).digest('hex');
+    
+    // Generate content fingerprint for future content similarity checks
+    const pdfText = await extractPDFText(req.file.buffer);
+    const contentFingerprint = pdfText ? generateContentFingerprint(pdfText) : null;
+
+    // Create upload stream
     const uploadStream = gfs.openUploadStream(req.file.originalname, {
       metadata: {
         userId: userId,
@@ -91,6 +439,8 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
         uploadDate: new Date(),
         contentType: req.file.mimetype,
         size: req.file.size,
+        fileHash: fileHash, // Store file hash for future duplicate detection
+        contentFingerprint: contentFingerprint, // Store content fingerprint for similarity detection
         impact: 0,
         clarity: 0,
         likes: 0,
@@ -458,6 +808,31 @@ router.get('/admin/all', requireAdminOrModerator, async (req, res) => {
     res.json(papers);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Test endpoint to verify PDF parsing functionality
+router.get('/test-pdf-parse', async (req, res) => {
+  try {
+    if (!pdfParse) {
+      return res.json({
+        status: 'error',
+        message: 'pdf-parse library not installed',
+        instruction: 'Run: npm install pdf-parse'
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      message: 'pdf-parse library is available and ready for content analysis',
+      version: require('pdf-parse/package.json').version
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Error testing pdf-parse',
+      error: error.message
+    });
   }
 });
 
@@ -940,6 +1315,75 @@ router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting paper stats:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Admin endpoint to update existing papers with content fingerprints
+router.post('/admin/update-content-fingerprints', requireAdminOrModerator, async (req, res) => {
+  try {
+    console.log('Starting content fingerprint update for existing papers...');
+    
+    const allPapers = await gfs.find({}).toArray();
+    let updatedCount = 0;
+    let errorCount = 0;
+    
+    for (const paper of allPapers) {
+      try {
+        // Skip if already has content fingerprint
+        if (paper.metadata.contentFingerprint) {
+          continue;
+        }
+        
+        // Download the file content
+        const downloadStream = gfs.openDownloadStream(paper._id);
+        const chunks = [];
+        
+        downloadStream.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        
+        downloadStream.on('end', async () => {
+          try {
+            const fileBuffer = Buffer.concat(chunks);
+            const pdfText = await extractPDFText(fileBuffer);
+            const contentFingerprint = pdfText ? generateContentFingerprint(pdfText) : null;
+            
+            if (contentFingerprint) {
+              // Update the paper metadata
+              await mongoose.connection.db.collection('papers.files').updateOne(
+                { _id: paper._id },
+                { $set: { 'metadata.contentFingerprint': contentFingerprint } }
+              );
+              updatedCount++;
+              console.log(`Updated fingerprint for paper: ${paper.metadata.title}`);
+            }
+          } catch (error) {
+            errorCount++;
+            console.error(`Error processing paper ${paper._id}:`, error);
+          }
+        });
+        
+        downloadStream.on('error', (error) => {
+          errorCount++;
+          console.error(`Error downloading paper ${paper._id}:`, error);
+        });
+        
+      } catch (error) {
+        errorCount++;
+        console.error(`Error processing paper ${paper._id}:`, error);
+      }
+    }
+    
+    res.json({
+      message: 'Content fingerprint update completed',
+      updatedCount,
+      errorCount,
+      totalPapers: allPapers.length
+    });
+    
+  } catch (error) {
+    console.error('Error updating content fingerprints:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

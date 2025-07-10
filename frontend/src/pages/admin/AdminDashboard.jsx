@@ -25,6 +25,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [recentUsers, setRecentUsers] = useState([]);
+  const [updatingFingerprints, setUpdatingFingerprints] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -53,6 +54,18 @@ const AdminDashboard = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleUpdateContentFingerprints = async () => {
+    setUpdatingFingerprints(true);
+    try {
+      const result = await paperService.updateContentFingerprints();
+      alert(`Content fingerprint update completed!\nUpdated: ${result.updatedCount} papers\nErrors: ${result.errorCount}\nTotal: ${result.totalPapers} papers`);
+    } catch (error) {
+      alert('Failed to update content fingerprints: ' + error.message);
+    } finally {
+      setUpdatingFingerprints(false);
+    }
   };
 
   if (loading) {
@@ -161,6 +174,14 @@ const AdminDashboard = () => {
               <FiFileText size={16} />
               Manage Papers
             </button>
+            <button 
+              className="admin-btn admin-btn-secondary"
+              onClick={handleUpdateContentFingerprints}
+              disabled={updatingFingerprints}
+            >
+              <FiDatabase size={16} />
+              {updatingFingerprints ? 'Updating...' : 'Update Content Fingerprints'}
+            </button>
           </div>
         </div>
 
@@ -247,6 +268,40 @@ const AdminDashboard = () => {
           display: flex;
           gap: 15px;
           flex-wrap: wrap;
+        }
+
+        .admin-btn {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          padding: 12px 20px;
+          border-radius: 8px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+        }
+
+        .admin-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .admin-btn-secondary {
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .admin-btn-secondary:hover {
+          box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
+        }
+
+        .admin-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
         }
 
         .system-status {

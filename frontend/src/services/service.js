@@ -102,6 +102,13 @@ export const paperService = {
       });
       return response.data;
     } catch (error) {
+      // Handle duplicate paper error specifically
+      if (error.response?.status === 409 && error.response?.data?.error === 'DUPLICATE_PAPER') {
+        throw {
+          ...error.response.data,
+          isDuplicate: true
+        };
+      }
       throw error.response?.data || { message: 'Upload failed' };
     }
   },
@@ -524,6 +531,16 @@ export const paperService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to track citation' };
+    }
+  },
+
+  // Update content fingerprints for existing papers (admin only)
+  updateContentFingerprints: async () => {
+    try {
+      const response = await api.post('/papers/admin/update-content-fingerprints');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to update content fingerprints' };
     }
   }
 };

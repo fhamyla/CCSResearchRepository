@@ -496,7 +496,24 @@ const ManagePapers = () => {
       closeUploadModal();
       loadPapers(); // Refresh the list
     } catch (error) {
-      setMessage('Upload failed: ' + error.message);
+      // Handle duplicate paper error specifically
+      if (error.isDuplicate) {
+        const duplicateMessage = `Duplicate paper detected: ${error.reason}. `;
+        if (error.existingPaper) {
+          const existingPaper = error.existingPaper;
+          const authorNames = existingPaper.authors && existingPaper.authors.length > 0 
+            ? existingPaper.authors.map(author => 
+                typeof author === 'object' ? (author.name || `${author.firstName || ''} ${author.lastName || ''}`.trim()) : author
+              ).join(', ')
+            : 'Unknown';
+          
+          setMessage(`${duplicateMessage}Existing paper: "${existingPaper.title}" by ${authorNames} (uploaded on ${new Date(existingPaper.uploadDate).toLocaleDateString()})`);
+        } else {
+          setMessage(duplicateMessage);
+        }
+      } else {
+        setMessage('Upload failed: ' + error.message);
+      }
     } finally {
       setUploading(false);
     }
@@ -761,7 +778,7 @@ const ManagePapers = () => {
       ) : (
         <>
           {message && (
-            <div className={`alert ${message.includes('Error') || message.includes('failed') ? 'alert-error' : 'alert-success'}`}>
+            <div className={`alert ${message.includes('Duplicate paper detected') ? 'alert-warning' : (message.includes('Error') || message.includes('failed') ? 'alert-error' : 'alert-success')}`}>
               {message}
             </div>
           )}
