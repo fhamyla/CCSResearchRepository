@@ -1683,16 +1683,166 @@ function detectSDGs(text) {
 }
 
 function extractTitle(text) {
-  // Heuristic: first non-empty line, not all uppercase, not 'abstract', not too short/long
+  // Split into lines and keep track of line numbers
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   
-  console.log('Analyzing lines for title extraction...');
-  console.log('First 10 lines:', lines.slice(0, 10));
+  // Context clues that indicate we're past the title and into administrative details
+  const administrativeClues = [
+    /^a project proposal$/i,
+    /^presented to the faculty/i,
+    /^in partial fulfillment/i,
+    /^submitted to/i,
+    /^for the degree/i,
+    /^bachelor of/i,
+    /^master of/i,
+    /^doctor of/i,
+    /^\d{4}$/, // Year like 2024
+    /^academic year/i,
+    /^semester/i,
+    /^trimester/i
+  ];
+
+  // Patterns for institutional text (school names, departments, etc.)
+  const institutionalPatterns = [
+    /institute/i,
+    /college/i,
+    /department/i,
+    /university/i,
+    /campus/i,
+    /school/i,
+    /manila/i,
+    /philippines/i,
+    /faculty/i,
+    /studies/i,
+    /science/i,
+    /technology/i,
+    /computing/i,
+    /affiliation/i,
+    /eulogio/i,
+    /rodriguez/i,
+    /sampaloc/i
+  ];
+
+  // Patterns for dedication text
+  const dedicationPatterns = [
+    /dedicated to/i,
+    /grateful/i,
+    /thank(s| you)?/i,
+    /our parents/i,
+    /my parents/i,
+    /their support/i,
+    /his support/i,
+    /her support/i,
+    /our family/i,
+    /my family/i,
+    /friends/i,
+    /guidance/i,
+    /inspiration/i,
+    /encouragement/i
+  ];
+
+  // Helper functions
+  function isAdministrative(line) {
+    return administrativeClues.some(re => re.test(line));
+  }
   
-  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+  function isInstitutional(line) {
+    return institutionalPatterns.some(re => re.test(line));
+  }
+  
+  function isDedication(line) {
+    return dedicationPatterns.some(re => re.test(line));
+  }
+
+  // Look for the title by finding the first administrative clue, then looking back
+  for (let i = 0; i < Math.min(lines.length, 100); i++) {
     const line = lines[i];
     
-    // Skip common non-title lines
+    // If we find an administrative clue, look back for the title
+    if (isAdministrative(line)) {
+      console.log('Found administrative clue:', line);
+      
+      // Look back up to 10 lines for the title
+      for (let j = i - 1; j >= Math.max(0, i - 10); j--) {
+        const candidate = lines[j];
+        
+        // Skip empty lines, institutional text, and section headers
+        if (
+          candidate.length > 5 &&
+          candidate.length < 200 &&
+          !/^abstract$/i.test(candidate) &&
+          !/^introduction$/i.test(candidate) &&
+          !/^keywords?:?/i.test(candidate) &&
+          !/^summary$/i.test(candidate) &&
+          !/^conclusion$/i.test(candidate) &&
+          !/^references$/i.test(candidate) &&
+          !/^bibliography$/i.test(candidate) &&
+          !/^\d+$/.test(candidate) &&
+          !/^page\s*\d+$/i.test(candidate) &&
+          !/^doi:/i.test(candidate) &&
+          !/^issn:/i.test(candidate) &&
+          !/^isbn:/i.test(candidate) &&
+          !isInstitutional(candidate) &&
+          !isDedication(candidate) &&
+          !isAdministrative(candidate)
+        ) {
+          // This looks like a potential title - it's concise, topic-specific, and not institutional/administrative
+          console.log('Found title by administrative clue analysis:', candidate);
+          return candidate;
+        }
+      }
+    }
+  }
+
+  // Fallback: look for context clues and analyze similarly
+  const contextClues = [
+    /presented to the faculty/i,
+    /in partial fulfillment/i,
+    /department of/i,
+    /academic year/i,
+    /project proposal/i,
+    /thesis/i,
+    /capstone/i,
+    /research paper/i,
+    /submitted to/i,
+    /college of/i,
+    /school of/i
+  ];
+
+  for (let i = 0; i < Math.min(lines.length, 100); i++) {
+    const line = lines[i];
+    if (contextClues.some(re => re.test(line))) {
+      for (let j = i - 1; j >= Math.max(0, i - 5); j--) {
+        const candidate = lines[j];
+        if (
+          candidate.length > 5 &&
+          candidate.length < 200 &&
+          !/^abstract$/i.test(candidate) &&
+          !/^introduction$/i.test(candidate) &&
+          !/^keywords?:?/i.test(candidate) &&
+          !/^summary$/i.test(candidate) &&
+          !/^conclusion$/i.test(candidate) &&
+          !/^references$/i.test(candidate) &&
+          !/^bibliography$/i.test(candidate) &&
+          !/^\d+$/.test(candidate) &&
+          !/^page\s*\d+$/i.test(candidate) &&
+          !/^doi:/i.test(candidate) &&
+          !/^issn:/i.test(candidate) &&
+          !/^isbn:/i.test(candidate) &&
+          !isInstitutional(candidate) &&
+          !isDedication(candidate) &&
+          !isAdministrative(candidate)
+        ) {
+          console.log('Found title by context clue analysis:', candidate);
+          return candidate;
+        }
+      }
+    }
+  }
+
+  // Final fallback: first non-institutional, non-administrative, non-section-heading line
+  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+    const line = lines[i];
     if (
       line.length > 5 &&
       line.length < 200 &&
@@ -1708,10 +1858,11 @@ function extractTitle(text) {
       !/^doi:/i.test(line) &&
       !/^issn:/i.test(line) &&
       !/^isbn:/i.test(line) &&
-      line !== line.toUpperCase() &&
-      !/^[A-Z\s]+$/.test(line) // Skip lines that are all caps
+      !isInstitutional(line) &&
+      !isDedication(line) &&
+      !isAdministrative(line)
     ) {
-      console.log('Found potential title:', line);
+      console.log('Found potential title (final fallback):', line);
       return line;
     }
   }
@@ -1724,8 +1875,8 @@ function extractAbstract(text) {
   // Look for 'Abstract' section with multiple patterns
   const patterns = [
     /abstract[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?|summary|conclusion)/i,
-    /summary[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?|conclusion)/i,
-    /résumé[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?)/i
+    /summary[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?|summary|conclusion)/i,
+    /résumé[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?|summary|conclusion)/i
   ];
   
   for (const pattern of patterns) {
