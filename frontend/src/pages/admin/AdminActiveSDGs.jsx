@@ -186,7 +186,7 @@ const AdminActiveSDGs = () => {
           }
 
           .sdg-stat-card {
-            background: linear-gradient(135deg, #800020 0%, #8B0000 100%);
+            background: linear-gradient(135deg, #4A102A 0%, #85193C 25%, #C5172E 75%, #FCF259 100%);
             border-radius: 12px;
             padding: 25px;
             color: white;
