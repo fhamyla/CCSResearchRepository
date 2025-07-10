@@ -34,23 +34,15 @@ const requireAdminOnly = async (req, res, next) => {
 };
 
 // Configure multer for memory storage
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 16 * 1024 * 1024, // 16MB limit (GridFS chunk limit)
-  },
+  fileSize: 15 * 1024 * 1024, // 15MB limit
   fileFilter: (req, file, cb) => {
-    // Only allow PDF and DOCX files
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
-    ];
-    
-    if (allowedTypes.includes(file.mimetype)) {
+    // Only allow PDF files
+    if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF and DOCX files are allowed'), false);
+      cb(new Error('Only PDF files are allowed'), false);
     }
   }
 });

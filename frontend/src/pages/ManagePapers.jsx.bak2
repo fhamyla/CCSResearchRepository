@@ -141,9 +141,9 @@ const ManagePapers = () => {
         return;
       }
       
-      // Check file size (10MB limit as shown in the image)
-      if (file.size > 10 * 1024 * 1024) {
-        setMessage('File size must be less than 10MB');
+      // Check file size (15MB limit)
+      if (file.size > 15 * 1024 * 1024) {
+        setMessage('File size must be less than 15MB');
         return;
       }
       
@@ -1095,7 +1095,7 @@ const ManagePapers = () => {
                       </div>
                       <div className="upload-text">Upload your research paper</div>
                       <div className="upload-subtext">or drag and drop your file here</div>
-                      <div className="file-types">PDF files only, up to 10MB</div>
+                      <div className="file-types">PDF files only, up to 15MB</div>
                     </div>
                     <input
                       id="fileInput"
