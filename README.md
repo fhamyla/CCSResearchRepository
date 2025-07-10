@@ -8,6 +8,10 @@ This is the github repo for the CCS Research Repository System. It provides REST
 - Paper request and approval system
 - Email notifications using Gmail SMTP
 - MongoDB database integration
+- Intelligent file upload analysis:
+  - Automatically detects and blocks duplicate files by analyzing file contents during upload.
+  - Prevents uploading of empty files.
+  - Analyzes uploaded files to ensure they are valid research papers, blocking files that do not meet the criteria.
 
 ## Prerequisites
 - Node.js (v16 or higher recommended)
