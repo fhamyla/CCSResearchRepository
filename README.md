@@ -2,6 +2,34 @@
 
 This is the github repo for the CCS Research Repository System. It provides RESTful APIs for user authentication, paper management, email notifications, and more.
 
+## Setup Instructions
+
+### Backend
+```bash
+cd backend
+npm install
+```
+
+3. **Configure environment variables:**
+   Create a `.env` file in the `backend/` directory with the following content:
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   GMAIL=your_gmail_address@gmail.com
+   GMAIL_PASSWORD=your_gmail_app_password
+   ```
+   - For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833) if you have 2FA enabled.
+
+```bash
+npm run dev
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 ## Features
 - User registration and authentication (with OTP email verification)
 - Admin and moderator user management
@@ -17,42 +45,6 @@ This is the github repo for the CCS Research Repository System. It provides REST
 - Node.js (v16 or higher recommended)
 - npm
 - MongoDB Atlas or local MongoDB instance
-
-## Setup Instructions
-
-1. **Clone the repository:**
-   ```bash
-   git clone <your-repo-url>
-   cd ccsre/backend
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables:**
-   Create a `.env` file in the `backend/` directory with the following content:
-   ```env
-   MONGODB_URI=your_mongodb_connection_string
-   GMAIL=your_gmail_address@gmail.com
-   GMAIL_PASSWORD=your_gmail_app_password
-   ```
-   - For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833) if you have 2FA enabled.
-
-4. **Start the backend server:**
-   ```bash
-   npm run dev
-   ```
-   or
-   ```bash
-   node index.js
-   ```
-
-5. **Server will run at:**
-   ```
-   http://localhost:3000
-   ```
 
 ## API Endpoints
 - User registration, login, and OTP: `/auth`
