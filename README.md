@@ -8,18 +8,6 @@ This is the github repo for the CCS Research Repository System. It provides REST
 ```bash
 cd backend
 npm install
-```
-
-3. **Configure environment variables:**
-   Create a `.env` file in the `backend/` directory with the following content:
-   ```env
-   MONGODB_URI=your_mongodb_connection_string
-   GMAIL=your_gmail_address@gmail.com
-   GMAIL_PASSWORD=your_gmail_app_password
-   ```
-   - For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833) if you have 2FA enabled.
-
-```bash
 npm run dev
 ```
 
@@ -29,6 +17,15 @@ cd frontend
 npm install
 npm run dev
 ```
+
+### Configure environment variables:
+   Create a `.env` file in the `backend/` directory with the following content:
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   GMAIL=your_gmail_address@gmail.com
+   GMAIL_PASSWORD=your_gmail_app_password
+   ```
+   - For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833) if you have 2FA enabled.
 
 ## Features
 - User registration and authentication (with OTP email verification)
