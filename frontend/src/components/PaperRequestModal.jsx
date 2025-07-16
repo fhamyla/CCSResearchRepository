@@ -1,3 +1,4 @@
+// Copyright (c) 2025 fhamyla
 import React, { useState } from 'react';
 import { FiSend, FiX } from 'react-icons/fi';
 import './PaperRequestModal.css';

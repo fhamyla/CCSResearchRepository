@@ -1,3 +1,4 @@
+// Copyright (c) 2025 fhamyla
 require('dotenv').config();
 const express = require('express');
 const User = require('../models/User');

@@ -1,3 +1,4 @@
+// Copyright (c) 2025 fhamyla
 import React, { useState, useEffect, useRef } from 'react';
 import { FiX, FiCopy, FiCheckCircle } from 'react-icons/fi';
 import './CitationModal.css';

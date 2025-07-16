@@ -1,3 +1,5 @@
+// Copyright (c) 2025 fhamyla
+// Licensed under the MIT License.
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paperService } from '../services/service';

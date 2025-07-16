@@ -1,3 +1,5 @@
+// Copyright (c) 2025 fhamyla
+// Licensed under the MIT License.
 import axios from 'axios';
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';

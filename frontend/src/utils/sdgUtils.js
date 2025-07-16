@@ -1,3 +1,5 @@
+// Copyright (c) 2025 fhamyla
+// Licensed under the MIT License.
 // SDG mapping utility
 export const SDG_MAPPING = {
   '1': 'SDG 1: No Poverty',

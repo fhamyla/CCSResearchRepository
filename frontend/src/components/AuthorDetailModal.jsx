@@ -1,3 +1,4 @@
+// Copyright (c) 2025 fhamyla
 import React, { useState, useEffect } from 'react';
 import { paperService } from '../services/service';
 import './AuthorDetailModal.css';

@@ -1,3 +1,4 @@
+// Copyright (c) 2025 fhamyla
 const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
