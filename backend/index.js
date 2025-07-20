@@ -13,7 +13,7 @@ const port = process.env.PORT || 3000;
 // Middleware
 const corsOptions = {
   origin: [
-    'ccs-research-repositoryapi.vercel.app',
+    'https://ccs-research-repositoryapi.vercel.app/',
     'http://localhost:5173', // For local development
     'http://localhost:3000'  // For local development
   ],
