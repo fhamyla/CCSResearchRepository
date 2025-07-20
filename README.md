@@ -2,7 +2,7 @@
 
 This is the github repo for the CCS Research Repository System. It provides RESTful APIs for user authentication, paper management, email notifications, and more.
 
-https://ccs-research-repository-tau.vercel.app/
+https://ccs-research-repo.vercel.app/
 
 <img src="frontend/src/assets/ccsrepo.png" alt="Dashboard" width="500"/>
 
