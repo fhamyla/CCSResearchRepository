@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const baseURL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api';
 
 const api = axios.create({
   baseURL,
@@ -165,7 +165,6 @@ export const paperService = {
       const papers = await api.get('/papers/public');
       
       // Extract actual author name (could be different format from what's shown in UI)
-      let processedAuthorName = authorName;
       
       // Try to find the exact author object from papers to get any userId or additional info
       let authorObj = null;
