@@ -1,5 +1,4 @@
 // Copyright (c) 2025 fhamyla
-// Licensed under the MIT License.
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({

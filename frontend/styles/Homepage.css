@@ -1,11 +1,11 @@
-/* Homepage Styles with White and Purple Theme */
+
 :root {
-  --primary-color: #800000;  /* Maroon */
-  --primary-light: #a94442;  /* Lighter Maroon */
-  --primary-dark: #4b0000;   /* Dark Maroon */
-  --primary-bg: #f5f5f5;     /* Light Grey */
-  --accent-color: #b22222;   /* Firebrick/Accent Maroon */
-  --accent-hover: #a94442;   /* Lighter Maroon */
+  --primary-color: #800000;  
+  --primary-light: #a94442;  
+  --primary-dark: #4b0000;   
+  --primary-bg: #f5f5f5;     
+  --accent-color: #b22222;   
+  --accent-hover: #a94442;   
   --white: #ffffff;
   --light-gray: #f5f5f5;
   --medium-gray: #cccccc;
@@ -16,7 +16,7 @@
   --warning: #ffc107;
   --danger: #dc3545;
   --info: #17a2b8;
-  --shadow: 0 4px 12px rgba(128, 0, 0, 0.15);  /* Maroon shadow */
+  --shadow: 0 4px 12px rgba(128, 0, 0, 0.15);  
   --shadow-light: 0 2px 8px rgba(128, 0, 0, 0.08);
   --shadow-heavy: 0 8px 24px rgba(128, 0, 0, 0.2);
   --border-radius: 6px;
@@ -41,11 +41,11 @@
   background: linear-gradient(135deg, var(--light-gray) 0%, #f1f3f4 100%);
 }
 
-/* Header Styles */
+
 .header {
   background: linear-gradient(180deg, var(--maroon-dark) 0%, var(--maroon) 100%);
   color: var(--white);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);  /* Subtle white border */
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);  
   box-shadow: var(--shadow-heavy);
 }
 
@@ -62,9 +62,9 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--white);  /* White text on dark background */
+  color: var(--white);  
   letter-spacing: -0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);  /* Subtle text shadow for depth */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);  
 }
 
 .header-actions {
@@ -81,7 +81,7 @@
 }
 
 .nav-link {
-  background: rgba(255, 255, 255, 0.1);  /* Translucent white background */
+  background: rgba(255, 255, 255, 0.1);  
   color: var(--white);
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 8px 16px;
@@ -93,7 +93,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  backdrop-filter: blur(4px);  /* Adds a subtle blur effect */
+  backdrop-filter: blur(4px);  
 }
 
 .nav-link:hover {
@@ -163,7 +163,7 @@
   border-color: rgba(220, 53, 69, 0.5);
 }
 
-/* Main Content */
+
 .main-content {
   padding: 0;
 }
@@ -174,7 +174,7 @@
   padding: 32px 24px;
 }
 
-/* Title Section */
+
 .title-section {
   margin-bottom: 32px;
   background: var(--white);
@@ -207,7 +207,7 @@
   margin: 0;
 }
 
-/* Search Section */
+
 .search-section {
   margin-bottom: 24px;
   background: var(--white);
@@ -293,7 +293,7 @@
   background: rgba(106, 48, 147, 0.15);
 }
 
-/* Filter Dropdown Styles */
+
 .filter-dropdown-container {
   position: relative;
   display: inline-block;
@@ -462,7 +462,7 @@
   transform: translateY(-1px);
 }
 
-/* Active Filters Styles */
+
 .active-filters {
   background: var(--white);
   border: 1px solid rgba(102, 51, 153, 0.08);
@@ -544,7 +544,7 @@
   transform: scale(1.1);
 }
 
-/* Results Header */
+
 .results-header {
   display: flex;
   justify-content: space-between;
@@ -587,7 +587,7 @@
   outline: none;
 }
 
-/* Papers List */
+
 .papers-list {
   display: flex;
   flex-direction: column;
@@ -641,7 +641,7 @@
   text-decoration: underline !important;
 }
 
-/* Paper metadata styles */
+
 .paper-meta {
   display: flex;
   align-items: center;
@@ -786,7 +786,7 @@
   color: #d1d5db;
 }
 
-/* User Menu Styles */
+
 .user-menu-container {
   position: relative;
 }
@@ -880,7 +880,7 @@
   background-color: rgba(220, 53, 69, 0.1);
 }
 
-/* Cite Button Styles */
+
 .cite-btn {
   display: flex;
   align-items: center;
@@ -902,7 +902,7 @@
   box-shadow: 0 2px 5px rgba(106, 48, 147, 0.1);
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .header-content {
     padding: 12px 16px;

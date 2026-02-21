@@ -16,10 +16,8 @@ import './AdminLayout.css';  const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
-  // Removed sidebar toggle state - sidebar will always be open
 
   useEffect(() => {
-    // Check if user is admin or moderator
     const userData = localStorage.getItem('user');
     if (!userData) {
       navigate('/signin');
@@ -33,6 +31,7 @@ import './AdminLayout.css';  const AdminLayout = ({ children }) => {
         return;
       }
       setUser(parsedUser);
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       navigate('/signin');
     }
@@ -49,7 +48,6 @@ import './AdminLayout.css';  const AdminLayout = ({ children }) => {
       name: 'Dashboard',
       icon: FiHome
     },
-    // Only show Manage Users for admin role
     ...(user?.role === 'admin' ? [{
       path: '/admin/manage-users',
       name: 'Manage Users',
@@ -88,13 +86,33 @@ import './AdminLayout.css';  const AdminLayout = ({ children }) => {
 
   return (
     <div className="admin-layout">
-      {/* Sidebar */}
+      {}
       <div className="admin-sidebar open">
         <div className="admin-sidebar-header">
           <div className="admin-logo">
-            <h2>{user?.role === 'admin' ? 'CCS Admin' : 'CCS Moderator'}</h2>
+            {String(user?.role || "").toLowerCase() === "admin" ? (
+              <h2>CCS Admin</h2>
+            ) : (
+              <h2
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate("/");
+                }}
+                style={{ cursor: "pointer" }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate("/");
+                  }
+                }}
+              >
+                CCS Moderator
+              </h2>
+            )}
           </div>
-          {/* Toggle button removed */}
         </div>
 
         <nav className="admin-nav">
@@ -132,7 +150,7 @@ import './AdminLayout.css';  const AdminLayout = ({ children }) => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {}
       <div className="admin-main sidebar-open">
         <div className="admin-content">
           {children}

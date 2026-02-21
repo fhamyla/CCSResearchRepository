@@ -1,5 +1,4 @@
 // Copyright (c) 2025 fhamyla
-// Licensed under the MIT License.
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paperService } from '../services/service';
@@ -35,7 +34,6 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
 
   useEffect(() => {
     if (isOpen && paperId) {
-      // Ensure paperId is a primitive value, not an object
       const id = typeof paperId === 'object' && paperId !== null ? paperId.id : paperId;
       loadPaperDetails(id);
       checkDownloadPermission(id);
@@ -70,7 +68,6 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
       return;
     }
 
-    // Ensure we're using a primitive paperId
     const id = typeof paperId === 'object' && paperId !== null ? paperId.id : paperId;
     
     setInteractionLoading(true);
@@ -96,7 +93,6 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
       return;
     }
 
-    // Ensure we're using a primitive paperId
     const id = typeof paperId === 'object' && paperId !== null ? paperId.id : paperId;
     
     setInteractionLoading(true);
@@ -124,7 +120,6 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
 
     if (!newComment.trim()) return;
 
-    // Ensure we're using a primitive paperId
     const id = typeof paperId === 'object' && paperId !== null ? paperId.id : paperId;
 
     setSubmittingComment(true);
@@ -150,7 +145,6 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
 
     if (!replyContent.trim()) return;
 
-    // Ensure we're using a primitive paperId
     const id = typeof paperId === 'object' && paperId !== null ? paperId.id : paperId;
 
     setSubmittingComment(true);
@@ -170,18 +164,15 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
   };
 
   const handlePreviewClick = () => {
-    // Check if user is a co-author first
     const isCoAuthor = paper?.authors && paper.authors.some(author => 
       author.userId === user?.id
     );
     
-    // If user is a co-author, allow preview directly
     if (isCoAuthor) {
       onPreview && onPreview(paper);
       return;
     }
     
-    // Otherwise, check download permission
     if (!downloadPermission?.canDownload) {
       if (!user) {
         navigate('/signin');
@@ -190,7 +181,6 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
       }
       return;
     }
-    // Call the onPreview prop with the paper object
     onPreview && onPreview(paper);
   };
 
@@ -389,7 +379,7 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
                         </div>
                       )}
 
-                      {/* Render replies */}
+                      {}
                       <div className="replies">
                         {getReplies(comment.id).map(reply => (
                           <div key={reply.id} className="reply">
@@ -410,7 +400,7 @@ const PaperDetailModal = ({ paperId, isOpen, onClose, user, onPreview }) => {
         </div>
       </div>
       
-      {/* Paper Request Modal */}
+      {}
       <PaperRequestModal
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}

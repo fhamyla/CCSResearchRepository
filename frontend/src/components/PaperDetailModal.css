@@ -1,4 +1,4 @@
-/* Paper Detail Modal Styles */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -68,7 +68,7 @@
   color: #d32f2f;
 }
 
-/* Paper Header */
+
 .paper-header {
   margin-bottom: 24px;
 }
@@ -122,7 +122,7 @@
   gap: 4px;
 }
 
-/* Paper Abstract */
+
 .paper-abstract {
   margin-bottom: 24px;
 }
@@ -140,7 +140,7 @@
   margin: 0;
 }
 
-/* Keywords */
+
 .paper-keywords {
   margin-bottom: 24px;
 }
@@ -167,7 +167,7 @@
   font-weight: 500;
 }
 
-/* Paper SDGs */
+
 .paper-sdgs {
   margin-bottom: 24px;
 }
@@ -195,7 +195,7 @@
   border: 1px solid #c8e6c8;
 }
 
-/* Paper Interactions */
+
 .paper-interactions {
   margin-bottom: 32px;
   padding: 20px;
@@ -287,7 +287,7 @@
   font-style: italic;
 }
 
-/* Comments Section */
+
 .comments-section {
   border-top: 1px solid #e1e5e9;
   padding-top: 24px;
@@ -369,7 +369,7 @@
   background-color: #3367d6;
 }
 
-/* Comments List */
+
 .comments-list {
   display: flex;
   flex-direction: column;
@@ -499,7 +499,7 @@
   margin-bottom: 0;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .modal-overlay {
     padding: 10px;

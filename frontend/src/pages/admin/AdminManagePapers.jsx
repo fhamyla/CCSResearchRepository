@@ -1,26 +1,4 @@
-/*
-MIT License
 
-Copyright (c) 2025 fhamyla
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -56,8 +34,8 @@ const AdminManagePapers = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterBy, setFilterBy] = useState('all'); // all, title, author, journal, year
-  const [sortBy, setSortBy] = useState('newest'); // newest, oldest, title, journal, size
+  const [filterBy, setFilterBy] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -78,14 +56,13 @@ const AdminManagePapers = () => {
   });
   const [editLoading, setEditLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState(''); // success, error, info
-  const [users, setUsers] = useState({}); // Store user data for department lookup
+  const [messageType, setMessageType] = useState('');
+  const [users, setUsers] = useState({});
   const [previewPaper, setPreviewPaper] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState('');
 
-  // Check if user is admin or moderator
   const checkAdminAccess = () => {
     const user = localStorage.getItem('user');
     if (!user) {
@@ -106,7 +83,6 @@ const AdminManagePapers = () => {
     }
   };
 
-  // Show message with auto-hide
   const showMessage = (text, type = 'info') => {
     setMessage(text);
     setMessageType(type);
@@ -116,7 +92,6 @@ const AdminManagePapers = () => {
     }, 5000);
   };
 
-  // Load all papers and statistics
   const loadData = async (showLoader = true) => {
     if (!checkAdminAccess()) return;
     
@@ -135,7 +110,6 @@ const AdminManagePapers = () => {
       setPapers(papersData || []);
       setStats(statsData || {});
       
-      // Load user data for department lookup
       const userData = {};
       if (papersData) {
         for (const paper of papersData) {
@@ -168,11 +142,9 @@ const AdminManagePapers = () => {
     loadData();
   }, []);
 
-  // Filter and sort papers
   const getFilteredAndSortedPapers = () => {
     let filtered = [...papers];
 
-    // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(paper => {
         const searchLower = searchTerm.toLowerCase();
@@ -190,7 +162,7 @@ const AdminManagePapers = () => {
             return paper.journal?.toLowerCase().includes(searchLower);
           case 'year':
             return paper.year?.toString().includes(searchTerm);
-          default: // 'all'
+          default:
             return (
               paper.title?.toLowerCase().includes(searchLower) ||
               paper.description?.toLowerCase().includes(searchLower) ||
@@ -206,7 +178,6 @@ const AdminManagePapers = () => {
       });
     }
 
-    // Apply sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'oldest':
@@ -217,7 +188,7 @@ const AdminManagePapers = () => {
           return (a.journal || '').localeCompare(b.journal || '');
         case 'size':
           return (b.size || 0) - (a.size || 0);
-        default: // 'newest'
+        default:
           return new Date(b.uploadDate) - new Date(a.uploadDate);
       }
     });
@@ -225,13 +196,11 @@ const AdminManagePapers = () => {
     return filtered;
   };
 
-  // Handle delete paper - show confirmation modal
   const handleDeleteClick = (paper) => {
     setPaperToDelete(paper);
     setShowDeleteModal(true);
   };
 
-  // Confirm delete paper
   const confirmDelete = async () => {
     if (!paperToDelete) return;
 
@@ -240,14 +209,13 @@ const AdminManagePapers = () => {
       showMessage('Paper deleted successfully', 'success');
       setShowDeleteModal(false);
       setPaperToDelete(null);
-      loadData(false); // Refresh without loading screen
+      loadData(false);
     } catch (error) {
       console.error('Error deleting paper:', error);
       showMessage('Error deleting paper: ' + (error.message || 'Unknown error'), 'error');
     }
   };
 
-  // Handle edit paper
   const handleEditClick = (paper) => {
     setSelectedPaper(paper);
     setEditForm({
@@ -267,7 +235,6 @@ const AdminManagePapers = () => {
     setShowEditModal(true);
   };
 
-  // Handle save edit
   const handleSaveEdit = async () => {
     if (!selectedPaper) return;
 
@@ -277,7 +244,7 @@ const AdminManagePapers = () => {
       showMessage('Paper updated successfully', 'success');
       setShowEditModal(false);
       setSelectedPaper(null);
-      loadData(false); // Refresh without loading screen
+      loadData(false);
     } catch (error) {
       console.error('Error updating paper:', error);
       showMessage('Error updating paper: ' + (error.message || 'Unknown error'), 'error');
@@ -286,15 +253,13 @@ const AdminManagePapers = () => {
     }
   };
 
-  // Preview handler (placeholder)
   const handlePreview = async (paper) => {
     setPreviewPaper(paper);
     setPreviewLoading(true);
     setPreviewError('');
     setPreviewUrl('');
     try {
-      // Fetch the paper file (assume PDF)
-      const response = await paperService.downloadPaper(paper.id, null, true); // true = preview mode
+      const response = await paperService.downloadPaper(paper.id, null, true);
       if (!response || !response.data) throw new Error('No file data');
       const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
       const blob = new Blob([response.data], { type: contentType });
@@ -314,7 +279,6 @@ const AdminManagePapers = () => {
     setPreviewError('');
   };
 
-  // Utility functions
   const formatFileSize = (bytes) => {
     if (!bytes || bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -350,10 +314,8 @@ const AdminManagePapers = () => {
     }
   };
 
-  // Show all papers (no isPublished filter)
   const filteredPapers = getFilteredAndSortedPapers();
 
-  // Add filter for department
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const departmentFilteredPapers = filteredPapers.filter(paper => {
     if (departmentFilter === 'all') return true;
@@ -361,7 +323,6 @@ const AdminManagePapers = () => {
     return user && user.department === departmentFilter;
   });
 
-  // Main content renderer
   const renderContent = () => {
     if (loading) {
       return (
@@ -374,7 +335,7 @@ const AdminManagePapers = () => {
 
     return (
       <>
-        {/* Header */}
+        {}
         <div style={styles.header}>
           <div style={styles.headerTop}>
             <h1 style={styles.title}>
@@ -394,7 +355,7 @@ const AdminManagePapers = () => {
             </div>
           </div>
 
-          {/* Search and Filter Controls */}
+          {}
           <div style={styles.controlsContainer}>
             <div style={styles.searchContainer}>
               <FiSearch style={styles.searchIcon} />
@@ -443,7 +404,7 @@ const AdminManagePapers = () => {
             </div>
           </div>
 
-          {/* Message Display */}
+          {}
           {message && (
             <div style={{
               ...styles.messageContainer,
@@ -456,9 +417,9 @@ const AdminManagePapers = () => {
           )}
         </div>
 
-        {/* Papers List */}
+        {}
         <div style={styles.papersContainer}>
-          {/* Preview Modal */}
+          {}
           <Modal
             isOpen={!!previewPaper}
             onRequestClose={closePreview}
@@ -605,7 +566,6 @@ const AdminManagePapers = () => {
     );
   };
 
-  // Edit Modal
   const renderEditModal = () => {
     if (!showEditModal || !selectedPaper) return null;
 
@@ -829,7 +789,6 @@ const AdminManagePapers = () => {
     );
   };
 
-  // Delete Confirmation Modal
   const renderDeleteModal = () => {
     if (!showDeleteModal || !paperToDelete) return null;
 
@@ -874,9 +833,7 @@ const AdminManagePapers = () => {
     );
   };
 
-  // Styles object using the royal velvet theme
   const styles = {
-    // Layout styles
     loadingContainer: {
       display: 'flex',
       flexDirection: 'column',
@@ -902,7 +859,6 @@ const AdminManagePapers = () => {
       animation: 'spin 1s linear infinite'
     },
 
-    // Header styles
     header: {
       marginBottom: '32px'
     },
@@ -944,7 +900,6 @@ const AdminManagePapers = () => {
       boxShadow: '0 2px 8px rgba(102, 51, 153, 0.1)'
     },
 
-    // Controls styles
     controlsContainer: {
       display: 'flex',
       gap: '16px',
@@ -990,7 +945,6 @@ const AdminManagePapers = () => {
       transition: 'border-color 0.3s ease'
     },
 
-    // Message styles
     messageContainer: {
       display: 'flex',
       alignItems: 'center',
@@ -1020,7 +974,6 @@ const AdminManagePapers = () => {
       border: '1px solid #bee5eb'
     },
 
-    // Papers container styles
     papersContainer: {
       minHeight: '400px'
     },
@@ -1132,7 +1085,6 @@ const AdminManagePapers = () => {
       gap: '6px'
     },
 
-    // Empty state styles
     emptyState: {
       textAlign: 'center',
       padding: '60px 20px',
@@ -1156,7 +1108,6 @@ const AdminManagePapers = () => {
       margin: '0 auto'
     },
 
-    // Modal styles
     modalOverlay: {
       position: 'fixed',
       top: 0,
@@ -1222,7 +1173,6 @@ const AdminManagePapers = () => {
       marginTop: '24px'
     },
 
-    // Form styles
     formGrid: {
       display: 'grid',
       gap: '20px'
@@ -1278,7 +1228,6 @@ const AdminManagePapers = () => {
       cursor: 'pointer'
     },
 
-    // Button styles
     saveButton: {
       display: 'flex',
       alignItems: 'center',
@@ -1327,7 +1276,6 @@ const AdminManagePapers = () => {
       animation: 'spin 1s linear infinite'
     },
 
-    // Confirmation modal styles
     confirmModalContent: {
       backgroundColor: 'white',
       borderRadius: '12px',
@@ -1385,7 +1333,6 @@ const AdminManagePapers = () => {
     }
   };
 
-  // Main component return
   return (
     <AdminLayout>
       <div>
@@ -1396,7 +1343,7 @@ const AdminManagePapers = () => {
               100% { transform: rotate(360deg); }
             }
             
-            /* Hover effects */
+            
             .admin-manage-papers button:hover {
               transform: translateY(-1px);
               box-shadow: 0 4px 12px rgba(102, 51, 153, 0.2);

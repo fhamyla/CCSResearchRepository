@@ -55,14 +55,12 @@ const Homepage = () => {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState('');
 
-  // Check if user is logged in when component mounts
   useEffect(() => {
     const loggedInUser = localStorage.getItem('user');
     if (loggedInUser) {
       const parsedUser = JSON.parse(loggedInUser);
       setUser(parsedUser);
       
-      // Redirect admin users to admin dashboard
       if (parsedUser.role === 'admin') {
         navigate('/admin/dashboard');
         return;
@@ -71,11 +69,10 @@ const Homepage = () => {
     loadPapers();
   }, [navigate]);
 
-  // Load papers from database
   const loadPapers = async () => {
     try {
       setLoading(true);
-      const response = await paperService.getPublicPapers(user?.id); // Pass userId
+      const response = await paperService.getPublicPapers(user?.id);
       setPapers(response);
     } catch (error) {
       console.error('Failed to load papers:', error);
@@ -83,7 +80,6 @@ const Homepage = () => {
       setLoading(false);
     }
   };
-  // Close filters when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filtersRef.current && !filtersRef.current.contains(event.target)) {
@@ -127,7 +123,6 @@ const Homepage = () => {
     });
   };
   const getAvailableSDGs = () => {
-    // Use the utility function to get standardized SDG list
     return getAllSDGs();
   };
 
@@ -175,7 +170,6 @@ const Homepage = () => {
   };
 
   const handlePaperTitleClick = (paperId) => {
-    // Ensure paperId is a string or number, not an object
     const id = typeof paperId === 'object' && paperId !== null ? paperId.id : paperId;
     setSelectedPaperId(id);
     setIsModalOpen(true);
@@ -216,16 +210,12 @@ const Homepage = () => {
     setPreviewError('');
     setPreviewUrl('');
     try {
-      // Check permission (reuse download permission logic if available)
       const permission = await paperService.checkDownloadPermission(paper.id, user?.id);
       if (!permission.canDownload) {
         setPreviewPaper(null);
-        // Optionally, trigger request modal here
-        // setMessage(permission.reason || 'You need permission to preview this paper.'); // This line was not in the new_code, so I'm removing it.
         return;
       }
-      // Fetch the paper file (assume PDF)
-      const response = await paperService.downloadPaper(paper.id, user?.id, true); // true = preview mode
+      const response = await paperService.downloadPaper(paper.id, user?.id, true);
       if (!response || !response.data) throw new Error('No file data');
       const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
       const blob = new Blob([response.data], { type: contentType });
@@ -246,7 +236,6 @@ const Homepage = () => {
   };
 
   const filteredPapers = papers.filter(paper => {
-    // Text search
     const matchesSearch = searchQuery === '' || 
       (typeof paper.title === 'object' ? 
         (paper.title.text || paper.title.content || '').toLowerCase().includes(searchQuery.toLowerCase()) :
@@ -273,7 +262,6 @@ const Homepage = () => {
 
     if (!matchesSearch) return false;
 
-    // SDG filter
     if (filters.sdgs.length > 0) {
       const paperSDGs = paper.sdgs || [];
       const hasMatchingSDG = filters.sdgs.some(filterSDG => {
@@ -282,7 +270,6 @@ const Homepage = () => {
       if (!hasMatchingSDG) return false;
     }
 
-    // Year range filter
     const paperYear = typeof paper.year === 'object' ? 
       (paper.year.value || paper.year.id || 0) : 
       (paper.year || 0);
@@ -294,7 +281,6 @@ const Homepage = () => {
       return false;
     }
 
-    // Publisher filter
     if (filters.publisher) {
       const paperPublisher = typeof paper.publisher === 'object' 
         ? (paper.publisher.name || paper.publisher.id || 'Unknown Publisher')
@@ -304,7 +290,6 @@ const Homepage = () => {
       }
     }
 
-    // Journal filter
     if (filters.journal) {
       const paperJournal = typeof paper.journal === 'object' 
         ? (paper.journal.name || paper.journal.id || 'Unknown Journal')
@@ -314,7 +299,6 @@ const Homepage = () => {
       }
     }
 
-    // Program filter (based on paper owner's department)
     if (filters.program) {
       if (paper.ownerDepartment !== filters.program) {
         return false;
@@ -420,16 +404,16 @@ const Homepage = () => {
         </div>
       </header>
 
-      {/* Main Content */}
+      {}
       <main className="main-content">
         <div className="content-container">
-          {/* Title and Description */}
+          {}
           <div className="title-section">
             <h2><FiFileText size={24} /> Research Repository</h2>
             <p>Discover, explore, and engage with the latest computer and communication sciences research.</p>
           </div>          
           
-          {/* Search and Filters */}
+          {}
           <div className="search-section">
             <div className="search-container">
               <div className="search-input-wrapper">
@@ -572,7 +556,7 @@ const Homepage = () => {
             )}
           </div>
 
-          {/* Active Filters Display */}
+          {}
           {(filters.sdgs.length > 0 || filters.publisher || filters.journal || filters.program || filters.yearRange.min || filters.yearRange.max) && (
             <div className="active-filters">
               <div className="active-filters-header">
@@ -614,7 +598,7 @@ const Homepage = () => {
             </div>
           )}
 
-          {/* Results and Sort */}
+          {}
           <div className="results-header">
             <span className="results-count">{sortedPapers.length} results</span>
             <div className="sort-section">
@@ -629,7 +613,7 @@ const Homepage = () => {
             </div>
           </div>
           
-          {/* Papers List */}
+          {}
           <div className="papers-list">
             {loading ? (
               <div style={{ textAlign: 'center', padding: '40px', fontSize: '18px', color: '#666' }}>
@@ -744,7 +728,7 @@ const Homepage = () => {
         </div>
       </main>
 
-      {/* Paper Detail Modal */}
+      {}
       <PaperDetailModal
         paperId={selectedPaperId}
         isOpen={isModalOpen}
@@ -753,21 +737,21 @@ const Homepage = () => {
         onPreview={handlePreview}
       />
 
-      {/* Author Detail Modal */}
+      {}
       <AuthorDetailModal
         authorName={selectedAuthor}
         isOpen={isAuthorModalOpen}
         onClose={handleCloseAuthorModal}
       />
 
-      {/* Citation Modal */}
+      {}
       <CitationModal
         paper={selectedPaperForCitation}
         isOpen={isCitationModalOpen}
         onClose={handleCloseCitationModal}
       />
 
-      {/* Preview Modal */}
+      {}
       <Modal
         isOpen={!!previewPaper}
         onRequestClose={closePreview}

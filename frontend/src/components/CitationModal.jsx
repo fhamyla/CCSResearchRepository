@@ -34,7 +34,6 @@ const CitationModal = ({ paper, isOpen, onClose }) => {
 
   if (!isOpen || !paper) return null;
 
-  // Generate APA citation
   const generateAPACitation = () => {
     if (!paper) return '';
 
@@ -44,26 +43,20 @@ const CitationModal = ({ paper, isOpen, onClose }) => {
             ? (author.name || 'Unknown Author') 
             : (String(author) || 'Unknown Author');
           
-          // Remove extra commas and trim whitespace
           authorName = authorName.replace(/,+/g, ',').trim();
           
-          // Handle case where name is already in "Lastname, F." format
           if (authorName.includes(',')) {
             return authorName;
           }
           
-          // Parse author name to get last name and initials
           const nameParts = authorName.split(' ').filter(part => part.trim() !== '');
           
-          // If we have nothing after parsing, return the original
           if (nameParts.length === 0) {
             return authorName;
           }
           
-          // Last part is assumed to be the last name
           const lastName = nameParts.pop() || '';
           
-          // Get first letter of each first/middle name
           const initials = nameParts
             .map(part => part.charAt(0).toUpperCase() + '.')
             .join('');
@@ -88,7 +81,6 @@ const CitationModal = ({ paper, isOpen, onClose }) => {
     const issue = paper.issue || '';
     const pages = paper.pages || '';
 
-    // Build the APA citation
     let citation = `${authors} (${year}). ${title}`;
     
     if (journal) {
@@ -109,7 +101,6 @@ const CitationModal = ({ paper, isOpen, onClose }) => {
     
     citation += '.';
     
-    // DOI is now completely removed from the citation
 
     return citation;
   };
@@ -119,14 +110,12 @@ const CitationModal = ({ paper, isOpen, onClose }) => {
     navigator.clipboard.writeText(citation);
     setCopied(true);
     
-    // Track citation count
     if (paper && paper.id) {
       try {
         const { paperService } = await import('../services/service');
         await paperService.trackCitation(paper.id);
       } catch (error) {
         console.error('Failed to track citation:', error);
-        // Don't show error to user as it's a background operation
       }
     }
   };

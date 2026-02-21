@@ -32,10 +32,8 @@ const Register = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Clear error when user starts typing
     if (error) setError('');
     
-    // Reset email verification if email changes
     if (e.target.name === 'email' && emailVerification.isEmailSent) {
       setEmailVerification({
         isEmailSent: false,
@@ -159,7 +157,6 @@ const Register = () => {
         formData.studentId
       );
       
-      // Show success message with approval info
       alert('Registration successful! Your account is pending approval. You will receive an email notification once an administrator approves your account.');
       navigate('/signin');
     } catch (error) {

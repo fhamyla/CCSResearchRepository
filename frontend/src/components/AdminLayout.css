@@ -1,4 +1,4 @@
-/* Royal Velvet Color Palette - Professional */
+
 :root {
   --royal-velvet: var(--maroon);
   --royal-velvet-light: var(--maroon-light);
@@ -28,14 +28,14 @@
   --gray-dark: #333333;
 }
 
-/* Admin Layout Container */
+
 .admin-layout {
   display: flex;
   min-height: 100vh;
   background: linear-gradient(135deg, var(--maroon) 0%, var(--gray) 100%);
 }
 
-/* Loading State */
+
 .admin-loading {
   display: flex;
   flex-direction: column;
@@ -61,7 +61,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Sidebar */
+
 .admin-sidebar {
   background: linear-gradient(180deg, var(--maroon) 0%, var(--maroon-dark) 100%);
   color: var(--white);
@@ -85,7 +85,7 @@
   width: 72px;
 }
 
-/* Sidebar Header */
+
 .admin-sidebar-header {
   padding: 24px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
@@ -124,7 +124,7 @@
   transform: scale(1.05);
 }
 
-/* Navigation */
+
 .admin-nav {
   flex: 1;
   padding: 24px 0;
@@ -187,7 +187,7 @@
   font-weight: inherit;
 }
 
-/* Sidebar Footer */
+
 .admin-sidebar-footer {
   padding: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
@@ -268,7 +268,7 @@
   transform: translateY(-1px);
 }
 
-/* Main Content */
+
 .admin-main {
   flex: 1;
   transition: margin-left var(--transition);
@@ -289,7 +289,7 @@
   min-height: 100vh;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .admin-sidebar {
     width: 72px !important;
@@ -310,7 +310,7 @@
   }
 }
 
-/* Admin Cards - Professional Design */
+
 .admin-card {
   background: var(--white);
   border-radius: var(--border-radius);
@@ -346,7 +346,7 @@
   letter-spacing: -0.5px;
 }
 
-/* Buttons - Enhanced Professional Design */
+
 .admin-btn {
   padding: 12px 24px;
   border: none;
@@ -423,7 +423,7 @@
   box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
 }
 
-/* Stats Cards - Enhanced */
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -485,7 +485,7 @@
   opacity: 0.8;
 }
 
-/* Tables - Enhanced Design */
+
 .admin-table {
   width: 100%;
   background: var(--white);
@@ -527,7 +527,7 @@
   border-bottom: none;
 }
 
-/* Status Badges */
+
 .status-badge {
   padding: 4px 12px;
   border-radius: 20px;
@@ -552,7 +552,7 @@
   color: #721c24;
 }
 
-/* Form Elements */
+
 .admin-form-group {
   margin-bottom: 20px;
 }
@@ -579,7 +579,7 @@
   box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1);
 }
 
-/* Alerts */
+
 .admin-alert {
   padding: 15px 20px;
   border-radius: 8px;

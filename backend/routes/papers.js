@@ -1,26 +1,4 @@
-/*
-MIT License
 
-Copyright (c) 2025 fhamyla
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
 const express = require('express');
 const multer = require('multer');
 const { GridFSBucket } = require('mongodb');
@@ -29,7 +7,6 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const router = express.Router();
 
-// PDF parsing library (will be installed)
 let pdfParse;
 try {
   pdfParse = require('pdf-parse');
@@ -38,7 +15,6 @@ try {
   pdfParse = null;
 }
 
-// Middleware to check if user is admin or moderator
 const requireAdminOrModerator = async (req, res, next) => {
   const userRole = req.headers['user-role'];
   if (!userRole || !['admin', 'moderator'].includes(userRole)) {
@@ -47,7 +23,6 @@ const requireAdminOrModerator = async (req, res, next) => {
   next();
 };
 
-// Middleware to check if user is admin only
 const requireAdminOnly = async (req, res, next) => {
   const userRole = req.headers['user-role'];
   if (!userRole || userRole !== 'admin') {
@@ -56,12 +31,10 @@ const requireAdminOnly = async (req, res, next) => {
   next();
 };
 
-// Configure multer for memory storage
 const upload = multer({
   storage: multer.memoryStorage(),
-  fileSize: 15 * 1024 * 1024, // 15MB limit
+  fileSize: 15 * 1024 * 1024,
   fileFilter: (req, file, cb) => {
-    // Only allow PDF files
     if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
@@ -70,7 +43,6 @@ const upload = multer({
   }
 });
 
-// Initialize GridFS
 let gfs;
 mongoose.connection.once('open', () => {
   gfs = new GridFSBucket(mongoose.connection.db, {
@@ -78,11 +50,10 @@ mongoose.connection.once('open', () => {
   });
 });
 
-// Function to extract text from PDF
 const extractPDFText = async (fileBuffer) => {
   if (!pdfParse) {
     console.log('pdf-parse not available - content analysis disabled');
-    return null; // Return null if pdf-parse is not available
+    return null;
   }
   
   try {
@@ -97,18 +68,15 @@ const extractPDFText = async (fileBuffer) => {
   }
 };
 
-// Function to generate content fingerprint (simplified version)
 const generateContentFingerprint = (text) => {
   if (!text) return null;
   
-  // Remove common words, punctuation, and normalize
   const normalizedText = text
     .toLowerCase()
-    .replace(/[^\w\s]/g, ' ') // Remove punctuation
-    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
   
-  // Split into words and filter out common words
   const commonWords = new Set([
     'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
     'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
@@ -120,12 +88,10 @@ const generateContentFingerprint = (text) => {
     word.length > 3 && !commonWords.has(word)
   );
   
-  // Take first 100 significant words for fingerprint
   const significantWords = words.slice(0, 100).sort();
   return significantWords.join(' ');
 };
 
-// Function to calculate content similarity
 const calculateContentSimilarity = (text1, text2) => {
   if (!text1 || !text2) return 0;
   
@@ -134,7 +100,6 @@ const calculateContentSimilarity = (text1, text2) => {
   
   if (!fingerprint1 || !fingerprint2) return 0;
   
-  // Use Jaccard similarity on word sets
   const words1 = new Set(fingerprint1.split(' '));
   const words2 = new Set(fingerprint2.split(' '));
   
@@ -144,25 +109,20 @@ const calculateContentSimilarity = (text1, text2) => {
   return intersection.size / union.size;
 };
 
-// Function to check for duplicate papers
 const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
   try {
     console.log('Starting duplicate check...');
     
-    // Generate file hash for content-based duplicate detection
     const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
     console.log('File hash generated:', fileHash.substring(0, 10) + '...');
     
-    // Extract PDF text for content analysis
     const pdfText = await extractPDFText(fileBuffer);
     console.log('PDF text available:', !!pdfText, 'Length:', pdfText ? pdfText.length : 0);
     
-    // Check for exact file content match
     const existingFiles = await gfs.find({}).toArray();
     console.log('Checking against', existingFiles.length, 'existing papers');
     
     for (const file of existingFiles) {
-      // Check file hash if available in metadata
       if (file.metadata.fileHash && file.metadata.fileHash === fileHash) {
         console.log('Exact file hash match found');
         return {
@@ -178,13 +138,11 @@ const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
       }
     }
     
-    // Check for duplicate title by the same user (case-insensitive)
     if (title) {
       const titleDuplicate = await gfs.find({ 
         'metadata.userId': userId 
       }).toArray();
       
-      // Check for exact title match (case-insensitive)
       const exactMatch = titleDuplicate.find(file => 
         file.metadata.title && 
         file.metadata.title.toLowerCase().trim() === title.toLowerCase().trim()
@@ -204,7 +162,6 @@ const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
       }
     }
     
-    // Check for duplicate DOI
     if (doi && doi.trim() !== '') {
       const doiDuplicate = await gfs.find({ 'metadata.doi': doi }).toArray();
       
@@ -223,7 +180,6 @@ const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
       }
     }
     
-    // Check for duplicate filename by the same user
     if (filename) {
       const filenameDuplicate = await gfs.find({ 
         'metadata.userId': userId,
@@ -244,13 +200,12 @@ const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
       }
     }
     
-    // Check for similar titles (fuzzy matching)
     if (title) {
       const allPapers = await gfs.find({}).toArray();
       for (const paper of allPapers) {
         if (paper.metadata.title) {
           const similarity = calculateSimilarity(title.toLowerCase(), paper.metadata.title.toLowerCase());
-          if (similarity > 0.9) { // 90% similarity threshold
+          if (similarity > 0.9) {
             return {
               isDuplicate: true,
               reason: 'A very similar paper title already exists',
@@ -266,22 +221,18 @@ const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
       }
     }
     
-    // Check for similar content (PDF text analysis)
-    if (pdfText && pdfText.length > 100) { // Only check if we have substantial text
+    if (pdfText && pdfText.length > 100) {
       console.log('Starting content similarity analysis...');
       const allPapers = await gfs.find({}).toArray();
       for (const paper of allPapers) {
-        // Skip if it's the same user's paper (allow updates)
         if (paper.metadata.userId === userId) continue;
         
         let existingContentFingerprint = paper.metadata.contentFingerprint;
         console.log(`Paper ${paper.metadata.title}: has fingerprint: ${!!existingContentFingerprint}`);
         
-        // If paper doesn't have stored content fingerprint, extract it on-the-fly
         if (!existingContentFingerprint && paper.metadata.contentType === 'application/pdf') {
           console.log(`Extracting content fingerprint for paper: ${paper.metadata.title}`);
           try {
-            // Download the existing paper content
             const downloadStream = gfs.openDownloadStream(paper._id);
             const chunks = [];
             
@@ -298,7 +249,6 @@ const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
                     existingContentFingerprint = generateContentFingerprint(existingPdfText);
                     console.log(`Generated fingerprint for ${paper.metadata.title}: ${existingContentFingerprint ? 'success' : 'failed'}`);
                     
-                    // Store the fingerprint for future use
                     await mongoose.connection.db.collection('papers.files').updateOne(
                       { _id: paper._id },
                       { $set: { 'metadata.contentFingerprint': existingContentFingerprint } }
@@ -322,11 +272,10 @@ const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
           }
         }
         
-        // Now compare content fingerprints
         if (existingContentFingerprint) {
           const contentSimilarity = calculateContentSimilarity(pdfText, existingContentFingerprint);
           console.log(`Content similarity with ${paper.metadata.title}: ${contentSimilarity.toFixed(3)}`);
-          if (contentSimilarity > 0.7) { // 70% content similarity threshold
+          if (contentSimilarity > 0.7) {
             console.log('High content similarity detected!');
             return {
               isDuplicate: true,
@@ -353,7 +302,6 @@ const checkForDuplicates = async (fileBuffer, title, doi, userId, filename) => {
   }
 };
 
-// Function to calculate string similarity (simple implementation)
 const calculateSimilarity = (str1, str2) => {
   const longer = str1.length > str2.length ? str1 : str2;
   const shorter = str1.length > str2.length ? str2 : str1;
@@ -364,7 +312,6 @@ const calculateSimilarity = (str1, str2) => {
   return (longer.length - editDistance) / longer.length;
 };
 
-// Levenshtein distance calculation
 const levenshteinDistance = (str1, str2) => {
   const matrix = [];
   
@@ -393,12 +340,10 @@ const levenshteinDistance = (str1, str2) => {
   return matrix[str2.length][str1.length];
 };
 
-// Function to validate file content
 const validateFileContent = async (fileBuffer, filename, contentType) => {
   try {
     console.log('Validating file content...');
     
-    // Check if file buffer is empty or too small
     if (!fileBuffer || fileBuffer.length === 0) {
       return {
         isValid: false,
@@ -407,8 +352,7 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
       };
     }
     
-    // Check minimum file size (at least 1KB)
-    const minSize = 1024; // 1KB
+    const minSize = 1024;
     if (fileBuffer.length < minSize) {
       return {
         isValid: false,
@@ -417,9 +361,7 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
       };
     }
     
-    // For PDF files, validate content
     if (contentType === 'application/pdf') {
-      // Check if it's a valid PDF by looking for PDF header
       const pdfHeader = fileBuffer.toString('ascii', 0, 4);
       if (pdfHeader !== '%PDF') {
         return {
@@ -429,7 +371,6 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
         };
       }
       
-      // Extract and validate PDF text content
       const pdfText = await extractPDFText(fileBuffer);
       if (!pdfText || pdfText.trim().length === 0) {
         return {
@@ -439,7 +380,6 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
         };
       }
       
-      // Check for minimum text content (at least 100 characters)
       const minTextLength = 100;
       if (pdfText.trim().length < minTextLength) {
         return {
@@ -449,7 +389,6 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
         };
       }
       
-      // Check for research content indicators
       const lowerText = pdfText.toLowerCase();
       const researchIndicators = [
         'abstract',
@@ -471,7 +410,6 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
         lowerText.includes(indicator)
       );
       
-      // Require at least 4 research indicators for academic papers
       if (foundIndicators.length < 4) {
         const missingIndicators = researchIndicators.filter(indicator => 
           !foundIndicators.includes(indicator)
@@ -495,7 +433,6 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
         };
       }
       
-      // Check for common empty PDF indicators
       const emptyIndicators = [
         'blank page',
         'empty document',
@@ -536,9 +473,7 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
       };
     }
     
-    // For DOCX files, check file structure
     if (contentType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      // Check for ZIP header (DOCX files are ZIP archives)
       const zipHeader = fileBuffer.toString('hex', 0, 4);
       if (zipHeader !== '504b0304') {
         return {
@@ -554,9 +489,7 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
       };
     }
     
-    // For DOC files, check for Microsoft Word header
     if (contentType === 'application/msword') {
-      // Check for Microsoft Word file signature
       const docHeader = fileBuffer.toString('hex', 0, 8);
       if (!docHeader.startsWith('d0cf11e0')) {
         return {
@@ -586,7 +519,6 @@ const validateFileContent = async (fileBuffer, filename, contentType) => {
   }
 };
 
-// Upload paper
 router.post('/upload', upload.single('paper'), async (req, res) => {
   try {
     if (!req.file) {
@@ -599,7 +531,6 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
       return res.status(400).json({ message: 'User ID is required' });
     }
 
-    // Parse JSON fields
     let parsedAuthors = [];
     let parsedTags = [];
     let parsedSDGs = [];
@@ -612,7 +543,6 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
       return res.status(400).json({ message: 'Invalid authors, tags, or sdgs format' });
     }
 
-    // Validate file content before processing
     const contentValidation = await validateFileContent(req.file.buffer, req.file.originalname, req.file.mimetype);
     
     if (!contentValidation.isValid) {
@@ -625,7 +555,6 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
 
     console.log('File content validation passed:', contentValidation);
 
-    // Check for duplicates before uploading
     const duplicateCheck = await checkForDuplicates(req.file.buffer, title, doi, userId, req.file.originalname);
     
     if (duplicateCheck.isDuplicate) {
@@ -637,14 +566,11 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
       });
     }
 
-    // Generate file hash for future duplicate detection
     const fileHash = crypto.createHash('sha256').update(req.file.buffer).digest('hex');
     
-    // Generate content fingerprint for future content similarity checks
     const pdfText = await extractPDFText(req.file.buffer);
     const contentFingerprint = pdfText ? generateContentFingerprint(pdfText) : null;
 
-    // Create upload stream
     const uploadStream = gfs.openUploadStream(req.file.originalname, {
       metadata: {
         userId: userId,
@@ -660,8 +586,8 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
         uploadDate: new Date(),
         contentType: req.file.mimetype,
         size: req.file.size,
-        fileHash: fileHash, // Store file hash for future duplicate detection
-        contentFingerprint: contentFingerprint, // Store content fingerprint for similarity detection
+        fileHash: fileHash,
+        contentFingerprint: contentFingerprint,
         impact: 0,
         clarity: 0,
         likes: 0,
@@ -675,7 +601,6 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
       }
     });
 
-    // Handle upload completion
     uploadStream.on('finish', () => {
       res.status(201).json({
         message: 'File uploaded successfully',
@@ -685,12 +610,10 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
       });
     });
 
-    // Handle upload error
     uploadStream.on('error', (error) => {
       res.status(500).json({ message: 'Upload failed', error: error.message });
     });
 
-    // Write file to GridFS
     uploadStream.end(req.file.buffer);
 
   } catch (error) {
@@ -698,21 +621,16 @@ router.post('/upload', upload.single('paper'), async (req, res) => {
   }
 });
 
-// Get user's papers (including papers where user is a co-author)
 router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Find papers where user is the main author
     const ownedFiles = await gfs.find({ 'metadata.userId': userId }).toArray();
     
-    // Find papers where user is a co-author
     const coauthorFiles = await gfs.find({ 'metadata.authors.userId': userId }).toArray();
     
-    // Combine and remove duplicates
     const allPaperFiles = [...ownedFiles];
     
-    // Add co-authored papers if they aren't already included
     coauthorFiles.forEach(file => {
       if (!allPaperFiles.some(existingFile => existingFile._id.toString() === file._id.toString())) {
         allPaperFiles.push(file);
@@ -731,7 +649,7 @@ router.get('/user/:userId', async (req, res) => {
         filename: file.filename,
         title: file.metadata.title,
         description: file.metadata.description,
-        abstract: file.metadata.description, // For backward compatibility
+        abstract: file.metadata.description,
         journal: file.metadata.journal,
         year: file.metadata.year,
         publisher: file.metadata.publisher || '',
@@ -747,8 +665,8 @@ router.get('/user/:userId', async (req, res) => {
         likes: file.metadata.likes || 0,
         dislikes: file.metadata.dislikes || 0,
         comments: file.metadata.comments || 0,
-        isOwner: isOwner, // Flag to indicate if user is the owner
-        isCoAuthor: isCoAuthor && !isOwner // Flag to indicate if user is a co-author (but not the owner)
+        isOwner: isOwner,
+        isCoAuthor: isCoAuthor && !isOwner
       };
     });
 
@@ -758,24 +676,20 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
-// Download paper
 router.get('/download/:fileId', async (req, res) => {
   try {
     const { fileId } = req.params;
     const { userId, preview } = req.query;
 
-    // Find the file
     const files = await gfs.find({ _id: new mongoose.Types.ObjectId(fileId) }).toArray();
     if (!files || files.length === 0) {
       return res.status(404).json({ message: 'File not found' });
     }
     const file = files[0];
 
-    // Check if user has permission to download or preview
     let hasPermission = false;
     let isAdmin = false;
     if (userId) {
-      // Get user role to check if admin or moderator
       const user = await User.findById(userId);
       if (user && ['admin', 'moderator'].includes(user.role)) {
         hasPermission = true;
@@ -783,7 +697,6 @@ router.get('/download/:fileId', async (req, res) => {
       } else if (file.metadata.userId === userId) {
         hasPermission = true;
       } else {
-        // Check if user is a co-author
         const isCoAuthor = file.metadata.authors && 
                           file.metadata.authors.some(author => 
                             author.userId === userId
@@ -791,7 +704,6 @@ router.get('/download/:fileId', async (req, res) => {
         if (isCoAuthor) {
           hasPermission = true;
         } else {
-          // Check if user has an approved paper request for this paper
           const PaperRequest = require('../models/PaperRequest');
           const approvedRequest = await PaperRequest.findOne({
             paperId: new mongoose.Types.ObjectId(fileId),
@@ -805,7 +717,6 @@ router.get('/download/:fileId', async (req, res) => {
         }
       }
     }
-    // Allow preview for admins even if userId is not provided
     if (preview === 'true' && userId) {
       const user = await User.findById(userId);
       if (user && ['admin', 'moderator'].includes(user.role)) {
@@ -813,7 +724,6 @@ router.get('/download/:fileId', async (req, res) => {
         isAdmin = true;
       }
     }
-    // If preview mode and no userId, allow (for admin panel preview)
     if (preview === 'true' && !userId) {
       hasPermission = true;
       isAdmin = true;
@@ -822,13 +732,11 @@ router.get('/download/:fileId', async (req, res) => {
       return res.status(403).json({ message: 'Access denied. You need permission to preview this paper.' });
     }
 
-    // Set response headers
     res.set({
       'Content-Type': file.metadata.contentType,
       'Content-Disposition': preview === 'true' ? `inline; filename="${file.filename}"` : `attachment; filename="${file.filename}"`
     });
 
-    // Create download stream
     const downloadStream = gfs.openDownloadStream(new mongoose.Types.ObjectId(fileId));
     downloadStream.on('error', (error) => {
       res.status(500).json({ message: 'Download failed', error: error.message });
@@ -839,13 +747,11 @@ router.get('/download/:fileId', async (req, res) => {
   }
 });
 
-// Delete paper
 router.delete('/:fileId', async (req, res) => {
   try {
     const { fileId } = req.params;
     const { userId } = req.body;
 
-    // Find the file first to check ownership
     const files = await gfs.find({ _id: new mongoose.Types.ObjectId(fileId) }).toArray();
     
     if (!files || files.length === 0) {
@@ -854,12 +760,10 @@ router.delete('/:fileId', async (req, res) => {
 
     const file = files[0];
 
-    // Check if user owns the file
     if (file.metadata.userId !== userId) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    // Delete the file
     await gfs.delete(new mongoose.Types.ObjectId(fileId));
     
     res.json({ message: 'File deleted successfully' });
@@ -869,7 +773,6 @@ router.delete('/:fileId', async (req, res) => {
   }
 });
 
-// Update paper metadata
 router.put('/:fileId', async (req, res) => {
   try {
     const { fileId } = req.params;
@@ -891,7 +794,6 @@ router.put('/:fileId', async (req, res) => {
       conferenceProceeding
     } = req.body;
 
-    // Find the file first to check ownership
     const files = await gfs.find({ _id: new mongoose.Types.ObjectId(fileId) }).toArray();
     
     if (!files || files.length === 0) {
@@ -900,7 +802,6 @@ router.put('/:fileId', async (req, res) => {
 
     const file = files[0];
 
-    // Check if user owns the file or is a co-author
     const isOwner = file.metadata.userId === userId;
     const isCoAuthor = file.metadata.authors && 
                       file.metadata.authors.some(author => 
@@ -911,10 +812,8 @@ router.put('/:fileId', async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    // Use either tags or keywords, whichever is provided
     const updatedTags = tags || keywords || file.metadata.tags;
 
-    // Update metadata in MongoDB directly
     await mongoose.connection.db.collection('papers.files').updateOne(
       { _id: new mongoose.Types.ObjectId(fileId) },
       { 
@@ -945,13 +844,11 @@ router.put('/:fileId', async (req, res) => {
   }
 });
 
-// Get all papers for public display (homepage)
 router.get('/public', async (req, res) => {
   try {
-    const { userId } = req.query; // Get userId from query params
+    const { userId } = req.query;
     const files = await gfs.find({}).toArray();
     
-    // Get user IDs to fetch department information
     const userIds = [...new Set(files.map(file => file.metadata.userId).filter(id => id))];
     const users = await User.find({ _id: { $in: userIds } }).select('_id department');
     const userDepartmentMap = {};
@@ -960,7 +857,6 @@ router.get('/public', async (req, res) => {
     });
 
     const papers = files.map(file => {
-      // Check if current user is a co-author
       let isCoAuthor = false;
       if (userId && file.metadata.authors) {
         isCoAuthor = file.metadata.authors.some(author => 
@@ -979,8 +875,8 @@ router.get('/public', async (req, res) => {
         abstract: file.metadata.description || 'No abstract available.',
         tags: file.metadata.tags || [],
         sdgs: file.metadata.sdgs || [],
-        impact: file.metadata.impact || (Math.random() * 2 + 3).toFixed(1), // Random rating 3-5
-        clarity: file.metadata.clarity || (Math.random() * 2 + 3).toFixed(1), // Random rating 3-5
+        impact: file.metadata.impact || (Math.random() * 2 + 3).toFixed(1),
+        clarity: file.metadata.clarity || (Math.random() * 2 + 3).toFixed(1),
         likes: file.metadata.likes || 0,
         dislikes: file.metadata.dislikes || 0,
         comments: (file.metadata.paperComments || []).length,
@@ -990,7 +886,7 @@ router.get('/public', async (req, res) => {
         filename: file.filename,
         size: file.metadata.size,
         ownerDepartment: userDepartmentMap[file.metadata.userId] || 'Unknown',
-        isCoAuthor: isCoAuthor // Add co-author flag
+        isCoAuthor: isCoAuthor
       };
     });
 
@@ -1000,7 +896,6 @@ router.get('/public', async (req, res) => {
   }
 });
 
-// Get all papers (for admin/moderator)
 router.get('/admin/all', requireAdminOrModerator, async (req, res) => {
   try {
     const files = await gfs.find({}).toArray();      const papers = files.map(file => ({
@@ -1032,7 +927,6 @@ router.get('/admin/all', requireAdminOrModerator, async (req, res) => {
   }
 });
 
-// Test endpoint to verify file content validation
 router.post('/test-content-validation', upload.single('testFile'), async (req, res) => {
   try {
     if (!req.file) {
@@ -1062,7 +956,6 @@ router.post('/test-content-validation', upload.single('testFile'), async (req, r
   }
 });
 
-// Test endpoint to verify PDF parsing functionality
 router.get('/test-pdf-parse', async (req, res) => {
   try {
     if (!pdfParse) {
@@ -1087,7 +980,6 @@ router.get('/test-pdf-parse', async (req, res) => {
   }
 });
 
-// Test endpoint for validation error messages
 router.get('/test-validation-messages', async (req, res) => {
   try {
     const testErrors = [
@@ -1124,16 +1016,14 @@ router.get('/test-validation-messages', async (req, res) => {
   }
 });
 
-// Get all users for co-author selection - MUST BE BEFORE /:paperId route
 router.get('/get-users-for-author-selection', async (req, res) => {
   try {
     console.log('Fetching users for co-author selection...');
     
-    // Find users with approved status using Mongoose model
     const users = await User.find(
       { status: 'approved' },
-      '-password' // Exclude password using string syntax
-    ).lean(); // Use lean() for better performance and to return plain objects
+      '-password'
+    ).lean();
     
     console.log(`Successfully retrieved ${users.length} users`);
     
@@ -1145,7 +1035,6 @@ router.get('/get-users-for-author-selection', async (req, res) => {
   }
 });
 
-// Get single paper details
 router.get('/:paperId', async (req, res) => {
   try {
     const { paperId } = req.params;
@@ -1187,7 +1076,6 @@ router.get('/:paperId', async (req, res) => {
   }
 });
 
-// Like a paper
 router.post('/:paperId/like', async (req, res) => {
   try {
     const { paperId } = req.params;
@@ -1207,14 +1095,12 @@ router.post('/:paperId/like', async (req, res) => {
     const userLikes = file.metadata.userLikes || [];
     const userDislikes = file.metadata.userDislikes || [];
     
-    // Check if user already liked
     if (userLikes.includes(userId)) {
       return res.status(400).json({ message: 'You have already liked this paper' });
-    }    // Remove from dislikes if exists
+    }
     const updatedDislikes = userDislikes.filter(id => id !== userId);
     const updatedLikes = [...userLikes, userId];
 
-    // Update the file metadata directly in the database
     await mongoose.connection.db.collection('papers.files').updateOne(
       { _id: new mongoose.Types.ObjectId(paperId) },
       { 
@@ -1237,7 +1123,6 @@ router.post('/:paperId/like', async (req, res) => {
   }
 });
 
-// Dislike a paper
 router.post('/:paperId/dislike', async (req, res) => {
   try {
     const { paperId } = req.params;
@@ -1257,14 +1142,12 @@ router.post('/:paperId/dislike', async (req, res) => {
     const userLikes = file.metadata.userLikes || [];
     const userDislikes = file.metadata.userDislikes || [];
     
-    // Check if user already disliked
     if (userDislikes.includes(userId)) {
       return res.status(400).json({ message: 'You have already disliked this paper' });
-    }    // Remove from likes if exists
+    }
     const updatedLikes = userLikes.filter(id => id !== userId);
     const updatedDislikes = [...userDislikes, userId];
 
-    // Update the file metadata directly in the database
     await mongoose.connection.db.collection('papers.files').updateOne(
       { _id: new mongoose.Types.ObjectId(paperId) },
       { 
@@ -1287,7 +1170,6 @@ router.post('/:paperId/dislike', async (req, res) => {
   }
 });
 
-// Add a comment to a paper
 router.post('/:paperId/comment', async (req, res) => {
   try {
     const { paperId } = req.params;
@@ -1315,7 +1197,6 @@ router.post('/:paperId/comment', async (req, res) => {
       parentCommentId: parentCommentId || null
     };    const updatedComments = [...existingComments, newComment];
 
-    // Update the file metadata directly in the database
     await mongoose.connection.db.collection('papers.files').updateOne(
       { _id: new mongoose.Types.ObjectId(paperId) },
       { 
@@ -1336,7 +1217,6 @@ router.post('/:paperId/comment', async (req, res) => {
   }
 });
 
-// Check download permission
 router.get('/:paperId/download-permission', async (req, res) => {
   try {
     const { paperId } = req.params;
@@ -1350,14 +1230,12 @@ router.get('/:paperId/download-permission', async (req, res) => {
 
     const file = files[0];
     
-    // Check permissions
     let canDownload = false;
     let reason = '';
 
     if (!userId) {
       reason = 'Please sign in to preview papers';
     } else {
-      // Get user details to check role
       const user = await User.findById(userId);
       
       if (!user) {
@@ -1369,7 +1247,6 @@ router.get('/:paperId/download-permission', async (req, res) => {
         canDownload = true;
         reason = 'Paper owner access';
       } else {
-        // Check if user is a co-author
         const isCoAuthor = file.metadata.authors && 
                           file.metadata.authors.some(author => 
                             author.userId === userId
@@ -1379,7 +1256,6 @@ router.get('/:paperId/download-permission', async (req, res) => {
           canDownload = true;
           reason = 'Co-author access';
         } else {
-          // Check if user has an approved paper request for this paper
           const PaperRequest = require('../models/PaperRequest');
           const approvedRequest = await PaperRequest.findOne({
             paperId: new mongoose.Types.ObjectId(paperId),
@@ -1407,21 +1283,17 @@ router.get('/:paperId/download-permission', async (req, res) => {
   }
 });
 
-// Admin paper management routes
 
-// Delete paper (admin only)
 router.delete('/admin/papers/:paperId', requireAdminOnly, async (req, res) => {
   try {
     const { paperId } = req.params;
 
-    // Find the file first to check if it exists
     const files = await gfs.find({ _id: new mongoose.Types.ObjectId(paperId) }).toArray();
     
     if (!files || files.length === 0) {
       return res.status(404).json({ message: 'Paper not found' });
     }
 
-    // Delete the file from GridFS
     await gfs.delete(new mongoose.Types.ObjectId(paperId));
 
     res.json({ message: 'Paper deleted successfully' });
@@ -1430,13 +1302,11 @@ router.delete('/admin/papers/:paperId', requireAdminOnly, async (req, res) => {
   }
 });
 
-// Update paper status/metadata (admin/moderator access)
 router.put('/admin/papers/:paperId', requireAdminOrModerator, async (req, res) => {
   try {
     const { paperId } = req.params;
     const { title, description, journal, year, publisher, authors, tags, sdgs, doi } = req.body;
 
-    // Find the file
     const files = await gfs.find({ _id: new mongoose.Types.ObjectId(paperId) }).toArray();
     
     if (!files || files.length === 0) {
@@ -1445,7 +1315,6 @@ router.put('/admin/papers/:paperId', requireAdminOrModerator, async (req, res) =
 
     const file = files[0];
 
-    // Update metadata
     const updatedMetadata = {
       ...file.metadata,
       title: title || file.metadata.title,
@@ -1460,7 +1329,6 @@ router.put('/admin/papers/:paperId', requireAdminOrModerator, async (req, res) =
       lastModified: new Date()
     };
 
-    // Since GridFS doesn't support metadata updates directly, we need to use MongoDB operations
     await mongoose.connection.db.collection('papers.files').updateOne(
       { _id: new mongoose.Types.ObjectId(paperId) },
       { $set: { metadata: updatedMetadata } }
@@ -1472,7 +1340,6 @@ router.put('/admin/papers/:paperId', requireAdminOrModerator, async (req, res) =
   }
 });
 
-// Track paper citation (increment citation count)
 router.post('/track-citation/:paperId', async (req, res) => {
   try {
     const { paperId } = req.params;
@@ -1481,7 +1348,6 @@ router.post('/track-citation/:paperId', async (req, res) => {
       return res.status(400).json({ message: 'Invalid paper ID' });
     }
 
-    // Update citation count in papers.files collection
     const result = await mongoose.connection.db.collection('papers.files').updateOne(
       { _id: new mongoose.Types.ObjectId(paperId) },
       { $inc: { 'metadata.citationCount': 1 } }
@@ -1498,10 +1364,8 @@ router.post('/track-citation/:paperId', async (req, res) => {
   }
 });
 
-// Get paper statistics for admin dashboard
 router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
   try {
-    // Get all papers
     const papers = await mongoose.connection.db.collection('papers.files').find({}).toArray();
     
     let csCount = 0;
@@ -1509,7 +1373,6 @@ router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
     let totalCitations = 0;
     let totalDownloads = 0;
     
-    // SDG statistics
     const sdgStats = {};
     const sdgMapping = {
       '1': 'SDG 1: No Poverty',
@@ -1531,7 +1394,6 @@ router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
       '17': 'SDG 17: Partnerships to achieve the Goal'
     };
 
-    // Initialize SDG stats
     for (let i = 1; i <= 17; i++) {
       sdgStats[`sdg${i}`] = {
         count: 0,
@@ -1541,7 +1403,6 @@ router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
     }
 
     for (const paper of papers) {
-      // Get paper owner to determine department
       if (paper.metadata.userId) {
         const owner = await User.findById(paper.metadata.userId);
         if (owner) {
@@ -1553,16 +1414,13 @@ router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
         }
       }
 
-      // Sum up citations and downloads
       totalCitations += paper.metadata.citationCount || 0;
       totalDownloads += paper.metadata.downloadCount || 0;
       
-      // Process SDGs
       if (paper.metadata.sdgs && Array.isArray(paper.metadata.sdgs)) {
         paper.metadata.sdgs.forEach(sdg => {
           let sdgNumber = null;
           
-          // Extract SDG number from various formats
           if (typeof sdg === 'string') {
             const match = sdg.match(/(\d+)/);
             if (match) sdgNumber = match[1];
@@ -1607,7 +1465,6 @@ router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
   }
 });
 
-// Admin endpoint to update existing papers with content fingerprints
 router.post('/admin/update-content-fingerprints', requireAdminOrModerator, async (req, res) => {
   try {
     console.log('Starting content fingerprint update for existing papers...');
@@ -1618,12 +1475,10 @@ router.post('/admin/update-content-fingerprints', requireAdminOrModerator, async
     
     for (const paper of allPapers) {
       try {
-        // Skip if already has content fingerprint
         if (paper.metadata.contentFingerprint) {
           continue;
         }
         
-        // Download the file content
         const downloadStream = gfs.openDownloadStream(paper._id);
         const chunks = [];
         
@@ -1638,7 +1493,6 @@ router.post('/admin/update-content-fingerprints', requireAdminOrModerator, async
             const contentFingerprint = pdfText ? generateContentFingerprint(pdfText) : null;
             
             if (contentFingerprint) {
-              // Update the paper metadata
               await mongoose.connection.db.collection('papers.files').updateOne(
                 { _id: paper._id },
                 { $set: { 'metadata.contentFingerprint': contentFingerprint } }
@@ -1676,8 +1530,6 @@ router.post('/admin/update-content-fingerprints', requireAdminOrModerator, async
   }
 });
 
-// --- PDF Analysis Endpoint ---
-// Helper: SDG keyword mapping
 const SDG_KEYWORDS = [
   { id: 1, keywords: ["poverty", "income", "poor"] },
   { id: 2, keywords: ["hunger", "food", "nutrition"] },
@@ -1706,10 +1558,8 @@ function detectSDGs(text) {
 }
 
 function extractTitle(text) {
-  // Split into lines and keep track of line numbers
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   
-  // Context clues that indicate we're past the title and into administrative details
   const administrativeClues = [
     /^a project proposal$/i,
     /^presented to the faculty/i,
@@ -1719,13 +1569,12 @@ function extractTitle(text) {
     /^bachelor of/i,
     /^master of/i,
     /^doctor of/i,
-    /^\d{4}$/, // Year like 2024
+    /^\d{4}$/,
     /^academic year/i,
     /^semester/i,
     /^trimester/i
   ];
 
-  // Patterns for institutional text (school names, departments, etc.)
   const institutionalPatterns = [
     /institute/i,
     /college/i,
@@ -1746,7 +1595,6 @@ function extractTitle(text) {
     /sampaloc/i
   ];
 
-  // Patterns for dedication text
   const dedicationPatterns = [
     /dedicated to/i,
     /grateful/i,
@@ -1764,7 +1612,6 @@ function extractTitle(text) {
     /encouragement/i
   ];
 
-  // Helper functions
   function isAdministrative(line) {
     return administrativeClues.some(re => re.test(line));
   }
@@ -1777,19 +1624,15 @@ function extractTitle(text) {
     return dedicationPatterns.some(re => re.test(line));
   }
 
-  // Look for the title by finding the first administrative clue, then looking back
   for (let i = 0; i < Math.min(lines.length, 100); i++) {
     const line = lines[i];
     
-    // If we find an administrative clue, look back for the title
     if (isAdministrative(line)) {
       console.log('Found administrative clue:', line);
       
-      // Look back up to 10 lines for the title
       for (let j = i - 1; j >= Math.max(0, i - 10); j--) {
         const candidate = lines[j];
         
-        // Skip empty lines, institutional text, and section headers
         if (
           candidate.length > 5 &&
           candidate.length < 200 &&
@@ -1809,7 +1652,6 @@ function extractTitle(text) {
           !isDedication(candidate) &&
           !isAdministrative(candidate)
         ) {
-          // This looks like a potential title - it's concise, topic-specific, and not institutional/administrative
           console.log('Found title by administrative clue analysis:', candidate);
           return candidate;
         }
@@ -1817,7 +1659,6 @@ function extractTitle(text) {
     }
   }
 
-  // Fallback: look for context clues and analyze similarly
   const contextClues = [
     /presented to the faculty/i,
     /in partial fulfillment/i,
@@ -1863,7 +1704,6 @@ function extractTitle(text) {
     }
   }
 
-  // Final fallback: first non-institutional, non-administrative, non-section-heading line
   for (let i = 0; i < Math.min(lines.length, 20); i++) {
     const line = lines[i];
     if (
@@ -1895,7 +1735,6 @@ function extractTitle(text) {
 }
 
 function extractAbstract(text) {
-  // Look for 'Abstract' section with multiple patterns
   const patterns = [
     /abstract[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?|summary|conclusion)/i,
     /summary[\s\n]*([\s\S]{0,1500}?)(?=\n\s*\w|\n\n|introduction|keywords?:?|summary|conclusion)/i,
@@ -1917,7 +1756,6 @@ function extractAbstract(text) {
 }
 
 function extractKeywords(text) {
-  // Look for 'Keywords' section with multiple patterns
   const patterns = [
     /keywords?:?[\s\n]*([\w\s,;\-\.]+?)(?=\n\s*\w|\n\n|introduction|abstract|summary)/i,
     /key\s+words?:?[\s\n]*([\w\s,;\-\.]+?)(?=\n\s*\w|\n\n|introduction|abstract|summary)/i,
@@ -1951,7 +1789,6 @@ router.post('/analyze-pdf', upload.single('file'), async (req, res) => {
     console.log('Starting PDF analysis for file:', req.file.originalname);
     console.log('File size:', req.file.size, 'bytes');
     
-    // First validate that this is actually a research paper
     const contentValidation = await validateFileContent(req.file.buffer, req.file.originalname, req.file.mimetype);
     
     if (!contentValidation.isValid) {
@@ -2005,7 +1842,6 @@ router.post('/analyze-pdf', upload.single('file'), async (req, res) => {
     console.error('Error details:', err.message);
     console.error('Error stack:', err.stack);
     
-    // Provide more specific error messages
     let errorMessage = 'Failed to analyze PDF';
     if (err.message.includes('Invalid PDF')) {
       errorMessage = 'The uploaded file is not a valid PDF or is corrupted';
@@ -2023,12 +1859,10 @@ router.post('/analyze-pdf', upload.single('file'), async (req, res) => {
   }
 });
 
-// Get all users for co-author selection
 router.get('/get-users-for-author-selection', async (req, res) => {
   try {
     console.log('Fetching users for co-author selection...');
     
-    // SIMPLE TEST - return hardcoded data first
     res.json([
       {
         _id: "507f1f77bcf86cd799439011",
@@ -2041,15 +1875,13 @@ router.get('/get-users-for-author-selection', async (req, res) => {
     ]);
     return;
     
-    // Try to get a count first
     const userCount = await User.countDocuments({ status: 'approved' });
     console.log(`Found ${userCount} approved users in database`);
     
-    // Find users with approved status using Mongoose model
     const users = await User.find(
       { status: 'approved' },
-      '-password' // Exclude password using string syntax
-    ).lean(); // Use lean() for better performance and to return plain objects
+      '-password'
+    ).lean();
     
     console.log(`Successfully retrieved ${users.length} users`);
     

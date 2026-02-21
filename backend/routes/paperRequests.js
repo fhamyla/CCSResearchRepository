@@ -7,7 +7,6 @@ const User = require('../models/User');
 const emailService = require('../services/emailService');
 const { GridFSBucket } = require('mongodb');
 
-// Middleware to check if user is admin or moderator
 const requireAdminOrModerator = async (req, res, next) => {
   const userRole = req.headers['user-role'];
   if (!userRole || !['admin', 'moderator'].includes(userRole)) {
@@ -16,7 +15,6 @@ const requireAdminOrModerator = async (req, res, next) => {
   next();
 };
 
-// Initialize GridFS
 let gfs;
 mongoose.connection.once('open', () => {
   gfs = new GridFSBucket(mongoose.connection.db, {
@@ -24,7 +22,6 @@ mongoose.connection.once('open', () => {
   });
 });
 
-// Create a paper request
 router.post('/request', async (req, res) => {
   try {
     const { paperId, userId, reason, paperTitle } = req.body;
@@ -33,7 +30,6 @@ router.post('/request', async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
     
-    // Check if user has already requested this paper
     const existingRequest = await PaperRequest.findOne({ 
       paperId: new mongoose.Types.ObjectId(paperId),
       userId: new mongoose.Types.ObjectId(userId),
@@ -66,7 +62,6 @@ router.post('/request', async (req, res) => {
   }
 });
 
-// Get all paper requests (admin/moderator access)
 router.get('/admin/requests', requireAdminOrModerator, async (req, res) => {
   try {
     const requests = await PaperRequest.find()
@@ -79,7 +74,6 @@ router.get('/admin/requests', requireAdminOrModerator, async (req, res) => {
   }
 });
 
-// Get pending paper requests (admin/moderator access)
 router.get('/admin/requests/pending', requireAdminOrModerator, async (req, res) => {
   try {
     const pendingRequests = await PaperRequest.find({ status: 'pending' })
@@ -92,7 +86,6 @@ router.get('/admin/requests/pending', requireAdminOrModerator, async (req, res) 
   }
 });
 
-// Process a paper request (admin/moderator access)
 router.put('/admin/requests/:requestId', requireAdminOrModerator, async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -108,7 +101,6 @@ router.put('/admin/requests/:requestId', requireAdminOrModerator, async (req, re
       return res.status(404).json({ message: 'Request not found' });
     }
     
-    // Update request status
     request.status = status;
     request.processedDate = new Date();
     request.processedBy = adminId;
@@ -116,22 +108,18 @@ router.put('/admin/requests/:requestId', requireAdminOrModerator, async (req, re
     
     await request.save();
     
-    // Get user email for notifications
     const user = await User.findById(request.userId);
     
     if (!user) {
       return res.status(404).json({ message: 'Requesting user not found' });
     }
     
-    // If approved, send paper access email (no duplicate status email)
     if (status === 'approved') {
-      // Increment download count in papers.files collection
       await mongoose.connection.db.collection('papers.files').updateOne(
         { _id: new mongoose.Types.ObjectId(request.paperId) },
         { $inc: { 'metadata.downloadCount': 1 } }
       );
 
-      // Find the paper in GridFS
       const files = await gfs.find({ 
         _id: new mongoose.Types.ObjectId(request.paperId) 
       }).toArray();
@@ -142,7 +130,6 @@ router.put('/admin/requests/:requestId', requireAdminOrModerator, async (req, re
       
       const file = files[0];
       
-      // Download file content from GridFS
       const chunks = [];
       const downloadStream = gfs.openDownloadStream(new mongoose.Types.ObjectId(request.paperId));
       
@@ -158,7 +145,6 @@ router.put('/admin/requests/:requestId', requireAdminOrModerator, async (req, re
         try {
           const paperContent = Buffer.concat(chunks);
           
-          // Send approval email (no attachment)
           await emailService.sendPaperAccessEmail(
             user.email,
             {
@@ -180,7 +166,6 @@ router.put('/admin/requests/:requestId', requireAdminOrModerator, async (req, re
         }
       });
     } else {
-      // For rejected requests, send status notification email
       await emailService.sendRequestStatusEmail(
         user.email,
         request.paperTitle,
@@ -195,7 +180,6 @@ router.put('/admin/requests/:requestId', requireAdminOrModerator, async (req, re
   }
 });
 
-// Get user's paper requests
 router.get('/user/:userId/requests', async (req, res) => {
   try {
     const { userId } = req.params;

@@ -1,4 +1,4 @@
-/* Register Styles */
+
 .register-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #800000 0%, #a94442 100%);
@@ -219,7 +219,7 @@
   text-decoration: underline;
 }
 
-/* Email Verification Styles */
+
 .email-verification-group {
   display: flex;
   gap: 10px;

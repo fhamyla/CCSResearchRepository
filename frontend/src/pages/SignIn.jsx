@@ -1,5 +1,4 @@
 // Copyright (c) 2025 fhamyla
-// Licensed under the MIT License.
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/service';
@@ -20,7 +19,6 @@ const SignIn = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Clear error when user starts typing
     if (error) setError('');
   };
   const handleSubmit = async (e) => {
@@ -28,7 +26,6 @@ const SignIn = () => {
     setLoading(true);
     setError('');
 
-    // Basic validation
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields');
       setLoading(false);
@@ -36,10 +33,8 @@ const SignIn = () => {
     }    try {
       const response = await authService.login(formData.email, formData.password);
       
-      // Store user data in localStorage
       localStorage.setItem('user', JSON.stringify(response.user));
       
-      // Redirect based on user role
       if (response.user.role === 'admin') {
         navigate('/admin/dashboard');
       } else {

@@ -16,35 +16,34 @@ const ManagePapers = () => {
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [title, setTitle] = useState('');
-  const [abstract, setAbstract] = useState(''); // Changed from description to abstract
+  const [abstract, setAbstract] = useState('');
   const [journal, setJournal] = useState('');
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [publisher, setPublisher] = useState('');
   const [authorsList, setAuthorsList] = useState([]);
   const [keywordsList, setKeywordsList] = useState([]);
   const [selectedSDGs, setSelectedSDGs] = useState([]);
-  const [currentAuthor, setCurrentAuthor] = useState('');
-  const [currentAuthorEmail, setCurrentAuthorEmail] = useState(''); // New for author email
-  const [currentAuthorPhone, setCurrentAuthorPhone] = useState(''); // New for author phone
+  const [setCurrentAuthor] = useState('');
+  // eslint-disable-next-line no-empty-pattern
+  const [] = useState('');
   const [currentKeyword, setCurrentKeyword] = useState('');
   const [doi, setDoi] = useState('');
   const [message, setMessage] = useState('');
   const [dragOver, setDragOver] = useState(false);
-  const [isPublished, setIsPublished] = useState(false); // New for published status
-  const [references, setReferences] = useState(''); // New for references
-  const [conferenceProceeding, setConferenceProceeding] = useState(false); // New for conference proceeding status
-  const [hasPublisher, setHasPublisher] = useState(false); // Radio button state for publisher
-  const [hasDoi, setHasDoi] = useState(false); // Radio button state for DOI
-  const [hasConference, setHasConference] = useState(false); // Radio button state for conference
-  const [allUsers, setAllUsers] = useState([]); // For storing users from the database
-  const [selectedUserId, setSelectedUserId] = useState(''); // For selected user as author
-  const [authorSearchTerm, setAuthorSearchTerm] = useState(''); // New state for author search
+  const [isPublished, setIsPublished] = useState(false);
+  const [references, setReferences] = useState('');
+  const [, setConferenceProceeding] = useState(false);
+  const [hasPublisher, setHasPublisher] = useState(false);
+  const [hasDoi, setHasDoi] = useState(false);
+  const [hasConference, setHasConference] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [authorSearchTerm, setAuthorSearchTerm] = useState('');
   const [previewPaper, setPreviewPaper] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState('');
   
-  // SDG options
   const sdgOptions = [
     { id: 1, name: "No Poverty" },
     { id: 2, name: "Zero Hunger" },
@@ -65,13 +64,12 @@ const ManagePapers = () => {
     { id: 17, name: "Partnerships for the Goals" }
   ];
 
-  // Helper function to get user ID regardless of property name (id or _id)
   const getUserId = () => {
     const user = localStorage.getItem('user');
     if (user) {
       try {
         const userData = JSON.parse(user);
-        return userData.id || userData._id; // Return id or _id, whichever exists
+        return userData.id || userData._id;
       } catch (error) {
         console.error('Error parsing user data from localStorage:', error);
         return null;
@@ -80,11 +78,9 @@ const ManagePapers = () => {
     return null;
   };
 
-  // Helper function to format user name properly
   const formatUserName = (user) => {
     if (!user) return 'Unknown User';
     
-    // Debug logging
     console.log('formatUserName called with:', user);
     
     const firstName = (user.firstName || '').trim();
@@ -97,7 +93,6 @@ const ManagePapers = () => {
     } else if (lastName) {
       return lastName;
     } else if (user.email) {
-      // Use email as fallback if no name is available
       return user.email.split('@')[0];
     } else {
       return 'Unknown User';
@@ -105,7 +100,6 @@ const ManagePapers = () => {
   };
   const userId = getUserId();
 
-  // Check if user is authenticated
   useEffect(() => {
     if (!userId) {
       setMessage('Please log in to access your papers.');
@@ -118,43 +112,38 @@ const ManagePapers = () => {
     if (userId) {
       loadPapers();
     }
-  }, [userId]);
+  }, [loadPapers, userId]);
 
-  // Fetch all users for author selection
   useEffect(() => {
     if (userId) {
       fetchUsers();
     }
   }, [userId]);
 
-  // Check for user data completeness on component mount
   useEffect(() => {
     refreshUserDataIfNeeded();
-  }, []);
+  }, [refreshUserDataIfNeeded]);
 
-  // Updated fetchUsers function to handle both _id and id fields
   const fetchUsers = async () => {
     try {
-      // Use the co-author specific endpoint that doesn't require admin privileges
       const users = await userService.getAllUsersForCoAuthors();
       
-      // Process users to ensure consistent ID field
       const processedUsers = users.map(user => ({
         ...user,
-        _id: user._id || user.id, // Ensure _id is available
-        id: user.id || user._id    // Ensure id is available
+        _id: user._id || user.id,
+        id: user.id || user._id
       }));
       
       setAllUsers(processedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       console.error('Full error details:', JSON.stringify(error, null, 2));
-      // Show the error message to help debug
       setMessage(`Error fetching users: ${error.message || JSON.stringify(error)}`);
     }
   };
 
-  const loadPapers = async () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps, no-undef
+  const loadPapers = useCallback(async () => {
     if (!userId) {
       return;
     }
@@ -168,17 +157,15 @@ const ManagePapers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   const handleFileSelect = async (file) => {
     if (file) {
-      // Check file type - only allow PDF
       const allowedTypes = ['application/pdf'];
       if (!allowedTypes.includes(file.type)) {
         setMessage('Only PDF files are allowed');
         return;
       }
-      // Check file size (15MB limit)
       if (file.size > 15 * 1024 * 1024) {
         setMessage('File size must be less than 15MB');
         return;
@@ -187,10 +174,8 @@ const ManagePapers = () => {
       setMessage('Analyzing PDF for metadata...');
       setLoading(true);
       try {
-        // Use the paperService to ensure proper API URL configuration
         const data = await paperService.analyzePDF(file);
         
-        // Handle warning messages
         if (data.warning) {
           setMessage(`Warning: ${data.warning}. Please review and edit the extracted information.`);
         } else {
@@ -214,7 +199,7 @@ const ManagePapers = () => {
         } else if (err.message.includes('scanned document')) {
           errorMessage = 'This appears to be a scanned document. Please enter the details manually.';
         } else if (err.message.includes('research paper')) {
-          errorMessage = err.message; // Use the specific research paper validation error
+          errorMessage = err.message;
         } else if (err.message.includes('insufficient text content')) {
           errorMessage = 'This document has insufficient text content. Please upload a complete research paper.';
         } else if (err.message.includes('non-research content')) {
@@ -263,7 +248,6 @@ const ManagePapers = () => {
 
   const addAuthor = () => {
     if (selectedUserId) {
-      // Find the selected user from allUsers
       const selectedUser = allUsers.find(user => (user._id === selectedUserId || user.id === selectedUserId));
       
       if (!selectedUser) {
@@ -271,7 +255,6 @@ const ManagePapers = () => {
         return;
       }
       
-      // Create author object with user details
       const authorDetails = {
         userId: selectedUser._id || selectedUser.id,
         name: formatUserName(selectedUser),
@@ -279,15 +262,14 @@ const ManagePapers = () => {
         phone: selectedUser.phoneNumber || ''
       };
       
-      // Check if this user is already added as an author
       const authorExists = authorsList.some(author => 
         author.userId === authorDetails.userId
       );
       
       if (!authorExists) {
         setAuthorsList([...authorsList, authorDetails]);
-        setSelectedUserId(''); // Reset selection
-        setAuthorSearchTerm(''); // Also clear the search term after adding
+        setSelectedUserId('');
+        setAuthorSearchTerm('');
         setMessage('');
       } else {
         setMessage('This user is already added as an author');
@@ -301,9 +283,8 @@ const ManagePapers = () => {
     setAuthorsList(authorsList.filter((_, i) => i !== index));
   };
 
-  // Filter users based on search term
   const filteredUsers = allUsers.filter(user => {
-    if (!authorSearchTerm) return true; // Show all when no search term
+    if (!authorSearchTerm) return true;
     
     const formattedName = formatUserName(user).toLowerCase();
     const firstName = (user.firstName || '').toLowerCase();
@@ -312,7 +293,6 @@ const ManagePapers = () => {
     const department = (user.department || '').toLowerCase();
     const searchLower = authorSearchTerm.toLowerCase();
     
-    // Search by formatted name, individual name fields, email, or department
     return formattedName.includes(searchLower) || 
            firstName.includes(searchLower) ||
            lastName.includes(searchLower) ||
@@ -340,7 +320,7 @@ const ManagePapers = () => {
   };
 
   const openUploadModal = () => {
-    resetForm(); // Call resetForm to initialize the authors list with current user
+    resetForm();
     setShowUploadModal(true);
     setAuthorSearchTerm('');
   };
@@ -355,24 +335,21 @@ const ManagePapers = () => {
     setSelectedPaper(paper);
     setShowEditModal(true);
     setTitle(paper.title || '');
-    setAbstract(paper.abstract || paper.description || ''); // Support both abstract and description
+    setAbstract(paper.abstract || paper.description || '');
     setJournal(paper.journal || '');
     setYear(paper.year || new Date().getFullYear().toString());
     setPublisher(paper.publisher || '');
     setDoi(paper.doi || '');
     setReferences(paper.references || '');
     setAuthorsList(paper.authors || []);
-    setKeywordsList(paper.tags || paper.keywords || []); // Support both tags and keywords
+    setKeywordsList(paper.tags || paper.keywords || []);
     
-    // Fixed: Handle different SDG formats properly
     let sdgs = [];
     if (paper.sdgs) {
       if (Array.isArray(paper.sdgs)) {
-        // Handle array of objects with id property
         if (paper.sdgs.length > 0 && typeof paper.sdgs[0] === 'object') {
           sdgs = paper.sdgs.map(sdg => sdg.id || sdg);
         } 
-        // Handle array of numbers or strings
         else {
           sdgs = paper.sdgs.map(sdg => typeof sdg === 'string' ? parseInt(sdg, 10) || sdg : sdg);
         }
@@ -387,7 +364,6 @@ const ManagePapers = () => {
     setHasConference(paper.conferenceProceeding || false);
     setAuthorSearchTerm('');
     
-    // Show a message indicating edit mode and role
     if (paper.isOwner) {
       setMessage('You are editing this paper as the main author.');
     } else if (paper.isCoAuthor) {
@@ -402,13 +378,10 @@ const ManagePapers = () => {
     setAuthorSearchTerm('');
   };
 
-  // Modified resetForm to handle the current user as the first author
   const resetForm = () => {
-    // Get current user details
     const currentUser = getUserFromLocalStorage();
     const currentUserId = getUserId();
     
-    // Initialize authors list with current user if available
     const initialAuthorsList = currentUser ? [{
       userId: currentUserId,
       name: formatUserName(currentUser),
@@ -438,13 +411,11 @@ const ManagePapers = () => {
     setSelectedUserId('');
   };
 
-  // Helper function to get user details from localStorage
   const getUserFromLocalStorage = () => {
     const user = localStorage.getItem('user');
     if (user) {
       try {
         const userData = JSON.parse(user);
-        // Ensure userData has consistent id field
         userData.id = userData.id || userData._id;
         userData._id = userData._id || userData.id;
         return userData;
@@ -456,12 +427,11 @@ const ManagePapers = () => {
     return null;
   };
 
-  // Helper function to refresh user data if firstName/lastName are missing
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const refreshUserDataIfNeeded = async () => {
     const currentUser = getUserFromLocalStorage();
     if (currentUser && (!currentUser.firstName || !currentUser.lastName)) {
       try {
-        // The user needs to log in again to get updated data
         setMessage('Please log out and log in again to update your profile information.');
       } catch (error) {
         console.error('Error refreshing user data:', error);
@@ -477,7 +447,6 @@ const ManagePapers = () => {
       return;
     }
 
-    // Check if file type is PDF
     if (selectedFile.type !== 'application/pdf') {
       setMessage('Only PDF files are allowed');
       return;
@@ -520,7 +489,6 @@ const ManagePapers = () => {
 
     setUploading(true);
     try {
-      // Prepare additional data
       const additionalData = {
         journal: isPublished ? journal : '',
         isPublished,
@@ -528,8 +496,8 @@ const ManagePapers = () => {
         publisher: isPublished && hasPublisher ? publisher : '',
         authors: authorsList,
         tags: keywordsList,
-        sdgs: selectedSDGs.map(sdg => typeof sdg === 'object' ? sdg : { id: sdg }), // Ensure consistent format
-        doi: isPublished && hasDoi ? doi : '', // Only include DOI when published and checked
+        sdgs: selectedSDGs.map(sdg => typeof sdg === 'object' ? sdg : { id: sdg }),
+        doi: isPublished && hasDoi ? doi : '',
         references,
         conferenceProceeding: isPublished && hasConference
       };
@@ -537,9 +505,8 @@ const ManagePapers = () => {
       await paperService.upload(selectedFile, userId, title, abstract, additionalData);
       setMessage('Paper uploaded successfully!');
       closeUploadModal();
-      loadPapers(); // Refresh the list
+      loadPapers();
     } catch (error) {
-      // Handle duplicate paper error specifically
       if (error.isDuplicate) {
         const duplicateMessage = `Duplicate paper detected: ${error.reason}. `;
         if (error.existingPaper) {
@@ -555,10 +522,8 @@ const ManagePapers = () => {
           setMessage(duplicateMessage);
         }
       } else if (error.isInvalidContent) {
-        // Handle file content validation error
         setMessage(`File content validation failed: ${error.reason}`);
       } else if (error.isValidationError) {
-        // Handle enhanced validation errors
         setMessage(error.message);
       } else {
         setMessage('Upload failed: ' + error.message);
@@ -608,27 +573,7 @@ const ManagePapers = () => {
 
     setUploading(true);
     try {
-      // Prepare updated data
-      const updatedData = {
-        title,
-        abstract,
-        description: abstract, // For backward compatibility
-        journal: isPublished ? journal : '',
-        isPublished,
-        year,
-        publisher: isPublished && hasPublisher ? publisher : '',
-        authors: authorsList,
-        tags: keywordsList,
-        keywords: keywordsList, // For backward compatibility
-        sdgs: selectedSDGs.map(sdg => typeof sdg === 'object' ? sdg : { id: sdg }), // Ensure consistent format
-        doi: isPublished && hasDoi ? doi : '',
-        references,
-        conferenceProceeding: isPublished && hasConference
-      };
-
-      const result = await paperService.updatePaper(selectedPaper.id, userId, updatedData);
       
-      // Show specific success message based on user's role
       if (selectedPaper.isOwner) {
         setMessage('Paper updated successfully as main author!');
       } else if (selectedPaper.isCoAuthor) {
@@ -638,7 +583,7 @@ const ManagePapers = () => {
       }
       
       closeEditModal();
-      loadPapers(); // Refresh the list
+      loadPapers();
     } catch (error) {
       setMessage('Update failed: ' + (error.message || 'Unknown error'));
     } finally {
@@ -652,9 +597,8 @@ const ManagePapers = () => {
     setPreviewError('');
     setPreviewUrl('');
     try {
-      // If the user is the owner, allow preview without permission check
       if (paper.isOwner) {
-        const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
+        const response = await paperService.downloadPaper(paper.id, userId, true);
         if (!response || !response.data) throw new Error('No file data');
         const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
         const blob = new Blob([response.data], { type: contentType });
@@ -662,14 +606,13 @@ const ManagePapers = () => {
       const url = window.URL.createObjectURL(blob);
         setPreviewUrl(url);
       } else {
-        // Check permission for non-owners
         const permission = await paperService.checkDownloadPermission(paper.id, userId);
         if (!permission.canDownload) {
           setPreviewPaper(null);
           setMessage(permission.reason || 'You need permission to preview this paper.');
           return;
         }
-        const response = await paperService.downloadPaper(paper.id, userId, true); // true = preview mode
+        const response = await paperService.downloadPaper(paper.id, userId, true);
         if (!response || !response.data) throw new Error('No file data');
         const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'application/pdf';
         const blob = new Blob([response.data], { type: contentType });
@@ -677,6 +620,7 @@ const ManagePapers = () => {
         const url = window.URL.createObjectURL(blob);
         setPreviewUrl(url);
       }
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setPreviewError('Failed to load preview.');
     } finally {
@@ -695,7 +639,7 @@ const ManagePapers = () => {
       try {
         await paperService.deletePaper(paper.id, userId);
         setMessage('Paper deleted successfully');
-        loadPapers(); // Refresh the list
+        loadPapers();
       } catch (error) {
         setMessage('Delete failed: ' + error.message);
       }
@@ -718,12 +662,6 @@ const ManagePapers = () => {
     });
   };
 
-  const getSDGName = (sdgId) => {
-    const sdg = sdgOptions.find(s => s.id === sdgId);
-    return sdg ? sdg.name : `SDG ${sdgId}`;
-  };
-
-  // Helper method to render author search UI
   const renderAuthorSearchUI = () => {
     return (
       <>
@@ -749,7 +687,7 @@ const ManagePapers = () => {
           </div>
         </div>
         
-        {/* Searchable Author Results */}
+        {}
         {authorSearchTerm.length > 0 && filteredUsers.length > 0 && (
           <div className="author-search-results">
             {filteredUsers.map((user) => {
@@ -791,7 +729,7 @@ const ManagePapers = () => {
           </div>
         )}
         
-        {/* Show message when no results found */}
+        {}
         {authorSearchTerm.length > 0 && filteredUsers.length === 0 && (
           <div className="no-authors-found">
             No authors found matching "{authorSearchTerm}"
@@ -819,7 +757,7 @@ const ManagePapers = () => {
                message.includes('📁')) {
       return 'alert-error';
     }
-    return 'alert-info'; // Default for other messages
+    return 'alert-info';
   };
 
   return (
@@ -853,7 +791,7 @@ const ManagePapers = () => {
             </div>
           )}
 
-          {/* Table Section */}
+          {}
           <div className="papers-table-section">        <div className="section-header">
           <h2 className="section-title">My Research Submissions</h2>
           <button
@@ -947,7 +885,7 @@ const ManagePapers = () => {
                           >
                             <i className="fas fa-eye"></i>
                           </button>
-                          {/* Edit button is available for both owners and co-authors */}
+                          {}
                           {(paper.isOwner || paper.isCoAuthor) && (
                             <button
                               onClick={() => openEditModal(paper)}
@@ -975,7 +913,7 @@ const ManagePapers = () => {
             )}
           </div>
 
-          {/* Preview Modal */}
+          {}
           <Modal
             isOpen={!!previewPaper}
             onRequestClose={closePreview}
@@ -1007,7 +945,7 @@ const ManagePapers = () => {
             </div>
           </Modal>
 
-          {/* Upload Modal */}
+          {}
           {showUploadModal && (
             <div className="modal-overlay">
               <div className="modal-container">
@@ -1017,7 +955,7 @@ const ManagePapers = () => {
                 </div>
                 
                 <form onSubmit={handleUpload} className="upload-form">
-                  {/* Title */}
+                  {}
                   <div className="form-group">
                     <label className="form-label">
                       Title <span className="required">*</span>
@@ -1032,7 +970,7 @@ const ManagePapers = () => {
                     />
                   </div>
 
-                  {/* Abstract */}
+                  {}
                   <div className="form-group">
                     <label className="form-label">
                       Abstract <span className="required">*</span>
@@ -1047,7 +985,7 @@ const ManagePapers = () => {
                     />
                   </div>
 
-                  {/* Keywords */}
+                  {}
                   <div className="dynamic-input-group">
                     <label className="form-label">
                       Keywords <span className="required">*</span>
@@ -1085,7 +1023,7 @@ const ManagePapers = () => {
                     </div>
                   </div>
 
-                  {/* SDG Selection */}
+                  {}
                   <div className="sdg-section">
                     <label className="form-label">
                       Sustainable Development Goals (SDGs) <span className="required">*</span>
@@ -1104,7 +1042,7 @@ const ManagePapers = () => {
                           <input
                             type="checkbox"
                             checked={selectedSDGs.includes(sdg.id)}
-                            onChange={() => {}} // Handled by onClick
+                            onChange={() => {}}
                             className="sdg-checkbox"
                           />
                           <span className="sdg-text">{sdg.id}: {sdg.name}</span>
@@ -1113,7 +1051,7 @@ const ManagePapers = () => {
                     </div>
                   </div>
 
-                  {/* Authors */}
+                  {}
                   <div className="dynamic-input-group">
                     <label className="form-label">
                       Authors <span className="required">*</span>
@@ -1145,7 +1083,7 @@ const ManagePapers = () => {
                                     type="button"
                                     onClick={() => removeAuthor(index)}
                                     className="remove-tag"
-                                    disabled={author.userId === userId} // Disable remove for current user
+                                    disabled={author.userId === userId}
                                     title={author.userId === userId ? "Cannot remove yourself as author" : "Remove co-author"}
                                   >
                                     ×
@@ -1159,7 +1097,7 @@ const ManagePapers = () => {
                     </div>
                   </div>
 
-                  {/* Journal, Publisher */}
+                  {}
                   <div className="multi-input-section">
                     <div className="form-group">
                       <label className="form-label">
@@ -1203,7 +1141,7 @@ const ManagePapers = () => {
                             required={isPublished}
                           />
                           
-                          {/* Publisher Radio Button */}
+                          {}
                           <div className="form-group" style={{ marginTop: '15px' }}>
                             <div className="radio-group">
                               <p>Does the paper have a publisher? <span className="required">*</span></p>
@@ -1246,7 +1184,7 @@ const ManagePapers = () => {
                             )}
                           </div>
                           
-                          {/* DOI Radio Button */}
+                          {}
                           <div className="form-group" style={{ marginTop: '15px' }}>
                             <div className="radio-group">
                               <p>Does the paper have a DOI? <span className="required">*</span></p>
@@ -1322,7 +1260,7 @@ const ManagePapers = () => {
                     )}
                   </div>
 
-                  {/* Conference Proceeding with Radio Buttons - Only shown when paper is published */}
+                  {}
                   {isPublished && (
                     <div className="form-group">
                       <div className="radio-group">
@@ -1359,7 +1297,7 @@ const ManagePapers = () => {
                     </div>
                   )}
 
-                  {/* References */}
+                  {}
                   <div className="form-group">
                     <label className="form-label">References</label>
                     <textarea
@@ -1371,7 +1309,7 @@ const ManagePapers = () => {
                     />
                   </div>
 
-                  {/* File Upload - moved to the bottom */}
+                  {}
                   <div className="file-upload-section">
                     <label className="form-label">
                       Paper File (PDF only) <span className="required">*</span>
@@ -1418,7 +1356,7 @@ const ManagePapers = () => {
                     )}
                   </div>
 
-                  {/* Form Actions */}
+                  {}
                   <div className="form-actions">
                     <button
                       type="button"
@@ -1442,7 +1380,7 @@ const ManagePapers = () => {
             </div>
           )}
 
-          {/* Edit Modal */}
+          {}
           {showEditModal && selectedPaper && (
             <div className="modal-overlay">
               <div className="modal-container">
@@ -1459,7 +1397,7 @@ const ManagePapers = () => {
                 </div>
                 
                 <form onSubmit={handleUpdate} className="upload-form">
-                  {/* Title */}
+                  {}
                   <div className="form-group">
                     <label className="form-label">
                       Title <span className="required">*</span>
@@ -1474,7 +1412,7 @@ const ManagePapers = () => {
                     />
                   </div>
 
-                  {/* Abstract */}
+                  {}
                   <div className="form-group">
                     <label className="form-label">
                       Abstract <span className="required">*</span>
@@ -1489,7 +1427,7 @@ const ManagePapers = () => {
                     />
                   </div>
 
-                  {/* Keywords */}
+                  {}
                   <div className="dynamic-input-group">
                     <label className="form-label">
                       Keywords <span className="required">*</span>
@@ -1527,7 +1465,7 @@ const ManagePapers = () => {
                     </div>
                   </div>
 
-                  {/* SDG Selection */}
+                  {}
                   <div className="sdg-section">
                     <label className="form-label">
                       Sustainable Development Goals (SDGs) <span className="required">*</span>
@@ -1546,7 +1484,7 @@ const ManagePapers = () => {
                           <input
                             type="checkbox"
                             checked={selectedSDGs.includes(sdg.id)}
-                            onChange={() => {}} // Handled by onClick
+                            onChange={() => {}}
                             className="sdg-checkbox"
                           />
                           <span className="sdg-text">{sdg.id}: {sdg.name}</span>
@@ -1555,7 +1493,7 @@ const ManagePapers = () => {
                     </div>
                   </div>
 
-                  {/* Authors */}
+                  {}
                   <div className="dynamic-input-group">
                     <label className="form-label">
                       Authors <span className="required">*</span>
@@ -1587,7 +1525,7 @@ const ManagePapers = () => {
                                     type="button"
                                     onClick={() => removeAuthor(index)}
                                     className="remove-tag"
-                                    disabled={author.userId === userId} // Disable remove for current user
+                                    disabled={author.userId === userId}
                                     title={author.userId === userId ? "Cannot remove yourself as author" : "Remove co-author"}
                                   >
                                     ×
@@ -1601,7 +1539,7 @@ const ManagePapers = () => {
                     </div>
                   </div>
 
-                  {/* Journal, Publisher */}
+                  {}
                   <div className="multi-input-section">
                     <div className="form-group">
                       <label className="form-label">
@@ -1645,7 +1583,7 @@ const ManagePapers = () => {
                             required={isPublished}
                           />
                           
-                          {/* Publisher Radio Button */}
+                          {}
                           <div className="form-group" style={{ marginTop: '15px' }}>
                             <div className="radio-group">
                               <p>Does the paper have a publisher? <span className="required">*</span></p>
@@ -1688,7 +1626,7 @@ const ManagePapers = () => {
                             )}
                           </div>
                           
-                          {/* DOI Radio Button */}
+                          {}
                           <div className="form-group" style={{ marginTop: '15px' }}>
                             <div className="radio-group">
                               <p>Does the paper have a DOI? <span className="required">*</span></p>
@@ -1764,7 +1702,7 @@ const ManagePapers = () => {
                     )}
                   </div>
 
-                  {/* Conference Proceeding with Radio Buttons - Only shown when paper is published */}
+                  {}
                   {isPublished && (
                     <div className="form-group">
                       <div className="radio-group">
@@ -1801,7 +1739,7 @@ const ManagePapers = () => {
                     </div>
                   )}
 
-                  {/* References */}
+                  {}
                   <div className="form-group">
                     <label className="form-label">References</label>
                     <textarea
@@ -1813,7 +1751,7 @@ const ManagePapers = () => {
                     />
                   </div>
 
-                  {/* Form Actions */}
+                  {}
                   <div className="form-actions">
                     <button
                       type="button"

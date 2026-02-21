@@ -10,7 +10,6 @@ const paperRequestsRoutes = require('./routes/paperRequests');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
 const corsOptions = {
   origin: [
     'https://ccs-research-repo.vercel.app',
@@ -25,18 +24,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Connect to MongoDB
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/papers', papersRoutes);
 app.use('/api/paper-requests', paperRequestsRoutes);
 
-// The /api/papers/analyze-pdf endpoint is now available for PDF metadata extraction
 
 app.get('/', (req, res) => {
   res.send('Backend API is running!');

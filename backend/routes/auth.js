@@ -6,10 +6,8 @@ const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 
-// In-memory storage for OTPs (expires after 10 minutes)
 const otpStorage = new Map();
 
-// Email transporter setup
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   port: 465,
@@ -23,12 +21,10 @@ const transporter = nodemailer.createTransport({
 console.log('GMAIL:', process.env.GMAIL);
 console.log('GMAIL_PASSWORD:', process.env.GMAIL_PASSWORD);
 
-// Helper function to generate 6-digit OTP
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Helper function to clean expired OTPs
 const cleanExpiredOTPs = () => {
   const now = Date.now();
   for (const [email, data] of otpStorage.entries()) {
@@ -38,7 +34,6 @@ const cleanExpiredOTPs = () => {
   }
 };
 
-// Send OTP to email for verification
 router.post('/send-otp', async (req, res) => {
   try {
     const { email } = req.body;
@@ -47,33 +42,27 @@ router.post('/send-otp', async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: 'Please enter a valid email address' });
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
-    // Clean up expired OTPs
     cleanExpiredOTPs();
 
-    // Generate OTP
     const otp = generateOTP();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+    const expiresAt = Date.now() + 10 * 60 * 1000;
 
-    // Store OTP in memory
     otpStorage.set(email, {
       otp,
       expiresAt,
       verified: false
     });
 
-    // Send email
     const mailOptions = {
       from: process.env.GMAIL,
       to: email,
@@ -106,7 +95,6 @@ router.post('/send-otp', async (req, res) => {
   }
 });
 
-// Verify OTP
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -115,10 +103,8 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ message: 'Email and OTP are required' });
     }
 
-    // Clean up expired OTPs
     cleanExpiredOTPs();
 
-    // Check if OTP exists and is valid
     const otpData = otpStorage.get(email);
     if (!otpData) {
       return res.status(400).json({ message: 'OTP expired or not found. Please request a new one.' });
@@ -128,7 +114,6 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ message: 'Invalid OTP. Please try again.' });
     }
 
-    // Mark as verified
     otpData.verified = true;
     otpStorage.set(email, otpData);
 
@@ -142,7 +127,6 @@ router.post('/verify-otp', async (req, res) => {
   }
 });
 
-// Register/Sign Up route
 router.post('/register', async (req, res) => {
   try {
     const { email, password, firstName, lastName, phoneNumber, department, studentId } = req.body;
@@ -151,56 +135,47 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Required fields are missing' });
     }
 
-    // Validate phone number format
     const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
     if (!phoneRegex.test(phoneNumber)) {
       return res.status(400).json({ message: 'Invalid phone number format' });
     }
 
-    // Validate department is one of the allowed values
     const allowedDepartments = ['Computer Science', 'Information Technology', 'Faculty'];
     if (!allowedDepartments.includes(department)) {
       return res.status(400).json({ message: 'Invalid department selection' });
     }
 
-    // Clean up expired OTPs
     cleanExpiredOTPs();
 
-    // Check if email was verified with OTP
     const otpData = otpStorage.get(email);
     if (!otpData || !otpData.verified) {
       return res.status(400).json({ message: 'Email not verified. Please verify your email first.' });
     }
 
-    // Check if user already exists (double check)
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash the password before saving
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create new user with default 'user' role and 'pending' status
     const user = new User({ 
       email, 
-      password: hashedPassword, // Use hashed password
+      password: hashedPassword,
       firstName,
       lastName,
       phoneNumber,
       department,
       studentId, 
-      role: 'user', // Always default to 'user' role
-      status: 'pending', // Require admin approval
-      isEmailVerified: true // Set to true since OTP was verified
+      role: 'user',
+      status: 'pending',
+      isEmailVerified: true
     });
     await user.save();
 
-    // Clean up OTP data after successful registration
     otpStorage.delete(email);
 
-    // Send pending approval email to user
     const approvalMailOptions = {
       from: process.env.GMAIL,
       to: email,
@@ -233,7 +208,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Sign In/Login route
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -241,7 +215,6 @@ router.post('/login', async (req, res) => {
     console.log('Login attempt for email:', email);
     console.log('Password provided:', password ? 'Yes' : 'No');
 
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       console.log('User not found for email:', email);
@@ -257,7 +230,6 @@ router.post('/login', async (req, res) => {
       passwordHash: user.password ? 'Present' : 'Missing'
     });
 
-    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     console.log('Password match result:', isMatch);
     
@@ -266,7 +238,6 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Check if user account is approved (unless admin or moderator)
     if (!['admin', 'moderator'].includes(user.role) && user.status !== 'approved') {
       return res.status(403).json({ 
         message: 'Your account is pending approval. Please wait for an administrator to approve your account.',
@@ -292,11 +263,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Admin routes for user management
-// Middleware to check if user is admin or moderator (admin/moderator access)
 const requireAdminOrModerator = async (req, res, next) => {
-  // In a real app, you'd get this from JWT token or session
-  // For now, we'll assume frontend sends user role in headers
   const userRole = req.headers['user-role'];
   if (!userRole || !['admin', 'moderator'].includes(userRole)) {
     return res.status(403).json({ message: 'Access denied. Admin or moderator privileges required.' });
@@ -304,7 +271,6 @@ const requireAdminOrModerator = async (req, res, next) => {
   next();
 };
 
-// Middleware to check if user is admin only (admin-only access)
 const requireAdminOnly = async (req, res, next) => {
   const userRole = req.headers['user-role'];
   if (!userRole || userRole !== 'admin') {
@@ -313,7 +279,6 @@ const requireAdminOnly = async (req, res, next) => {
   next();
 };
 
-// Get all users (admin/moderator access)
 router.get('/admin/users', requireAdminOrModerator, async (req, res) => {
   try {
     const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 });
@@ -323,21 +288,17 @@ router.get('/admin/users', requireAdminOrModerator, async (req, res) => {
   }
 });
 
-// Update user role (admin only - can only promote users to moderator, not admin)
 router.put('/admin/users/:userId/role', requireAdminOnly, async (req, res) => {
   try {
     const { userId } = req.params;
     const { role } = req.body;
 
-    // Only allow admin to promote users to moderator, not to admin
     if (!['user', 'moderator'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role. Only user and moderator roles are allowed.' });
     }
 
-    // Find the admin user (first admin created)
     const firstAdmin = await User.findOne({ role: 'admin' }).sort({ createdAt: 1 });
     
-    // Prevent changing the first admin's role
     if (userId === firstAdmin._id.toString()) {
       return res.status(400).json({ message: 'Cannot change the primary admin\'s role.' });
     }
@@ -358,7 +319,6 @@ router.put('/admin/users/:userId/role', requireAdminOnly, async (req, res) => {
   }
 });
 
-// Delete user (admin only)
 router.delete('/admin/users/:userId', requireAdminOnly, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -375,7 +335,6 @@ router.delete('/admin/users/:userId', requireAdminOnly, async (req, res) => {
   }
 });
 
-// Get user statistics (admin/moderator access)
 router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -405,7 +364,6 @@ router.get('/admin/stats', requireAdminOrModerator, async (req, res) => {
   }
 });
 
-// Get pending users (admin/moderator access)
 router.get('/admin/users/pending', requireAdminOrModerator, async (req, res) => {
   try {
     const pendingUsers = await User.find({ status: 'pending' }, { password: 0 })
@@ -416,7 +374,6 @@ router.get('/admin/users/pending', requireAdminOrModerator, async (req, res) => 
   }
 });
 
-// Approve/reject user (admin/moderator access)
 router.put('/admin/users/:userId/status', requireAdminOrModerator, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -436,7 +393,6 @@ router.put('/admin/users/:userId/status', requireAdminOrModerator, async (req, r
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Send email notification to user
     let emailSubject, emailContent;
     
     if (status === 'approved') {
@@ -490,7 +446,6 @@ router.put('/admin/users/:userId/status', requireAdminOrModerator, async (req, r
   }
 });
 
-// Get user by name (first name + last name)
 router.get('/users/by-name/:name', async (req, res) => {
   try {
     const { name } = req.params;
@@ -501,12 +456,10 @@ router.get('/users/by-name/:name', async (req, res) => {
     
     console.log('Searching for user by name:', name);
     
-    // Split the name to match against first and last name
     const nameParts = name.split(' ');
     let query = {};
     
     if (nameParts.length === 1) {
-      // If only one name part is provided, search in both first and last name
       query = {
         $or: [
           { firstName: new RegExp(nameParts[0], 'i') },
@@ -514,22 +467,14 @@ router.get('/users/by-name/:name', async (req, res) => {
         ]
       };
     } else if (nameParts.length >= 2) {
-      // If multiple name parts, try different matching patterns:
-      // 1. Match first name + last name
-      // 2. Match first name only
-      // 3. Match last name only
-      // 4. Match either name against either field (more flexible matching)
       query = {
         $or: [
-          // Exact match with first and last name
           {
             firstName: new RegExp(`^${nameParts[0]}$`, 'i'),
             lastName: new RegExp(`^${nameParts.slice(1).join(' ')}$`, 'i')
           },
-          // Partial matches
           { firstName: new RegExp(nameParts[0], 'i') },
           { lastName: new RegExp(nameParts.slice(1).join(' '), 'i') },
-          // Flexible matching (any part of the name matches any field)
           { firstName: new RegExp(name, 'i') },
           { lastName: new RegExp(name, 'i') }
         ]
@@ -538,7 +483,6 @@ router.get('/users/by-name/:name', async (req, res) => {
     
     console.log('Query:', JSON.stringify(query));
     
-    // Find users matching the name
     const users = await User.find(query).select('firstName lastName email department');
     
     console.log('Found users:', users.length);
@@ -547,7 +491,6 @@ router.get('/users/by-name/:name', async (req, res) => {
       return res.status(404).json({ message: 'No users found with this name' });
     }
     
-    // Return the list of matching users with limited information for privacy
     res.status(200).json(users);
   } catch (error) {
     console.error('Get user by name error:', error);
@@ -555,7 +498,6 @@ router.get('/users/by-name/:name', async (req, res) => {
   }
 });
 
-// Get user by ID
 router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -566,14 +508,12 @@ router.get('/user/:userId', async (req, res) => {
     
     console.log('Fetching user by ID:', userId);
     
-    // Find user by ID
     const user = await User.findById(userId).select('firstName lastName email department');
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    // Return user with limited information for privacy
     res.status(200).json({
       id: user._id,
       firstName: user.firstName,

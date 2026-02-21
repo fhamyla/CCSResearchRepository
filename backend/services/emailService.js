@@ -5,7 +5,6 @@ const nodemailer = require('nodemailer');
 console.log('GMAIL:', process.env.GMAIL);
 console.log('GMAIL_PASSWORD:', process.env.GMAIL_PASSWORD);
 
-// Configure nodemailer with environment variables
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   port: 465,
@@ -16,9 +15,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Email service functions
 const emailService = {
-  // Send paper access email WITHOUT attachment
   sendPaperAccessEmail: async (userEmail, paperData, paperContent, message) => {
     try {
       const emailOptions = {
@@ -53,7 +50,6 @@ const emailService = {
             </p>
           </div>
         `
-        // No attachments field
       };
 
       const info = await transporter.sendMail(emailOptions);
@@ -64,7 +60,6 @@ const emailService = {
     }
   },
 
-  // Send notification about request status
   sendRequestStatusEmail: async (userEmail, paperTitle, status, message) => {
     try {
       const emailOptions = {
@@ -103,7 +98,6 @@ const emailService = {
   }
 };
 
-// Helper function to format authors array for email
 function formatAuthors(authors) {
   if (!authors || !Array.isArray(authors)) return 'N/A';
   

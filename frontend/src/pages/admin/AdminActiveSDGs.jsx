@@ -1,26 +1,4 @@
-/*
-MIT License
 
-Copyright (c) 2025 fhamyla
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import { paperService } from '../../services/service';
@@ -48,7 +26,6 @@ const AdminActiveSDGs = () => {
       const stats = await paperService.adminGetPaperStats();
       setSdgStats(stats.sdgStats || {});
       
-      // Calculate totals
       const activeSDGsCount = Object.values(stats.sdgStats || {}).filter(data => data.count > 0).length;
       const totalPapersCount = Object.values(stats.sdgStats || {}).reduce((sum, data) => sum + data.count, 0);
       
@@ -96,7 +73,7 @@ const AdminActiveSDGs = () => {
           </h1>
         </div>
 
-        {/* Summary Statistics */}
+        {}
         <div className="sdg-summary-stats">
           <div className="sdg-summary-card">
             <div className="sdg-summary-icon">
@@ -107,11 +84,11 @@ const AdminActiveSDGs = () => {
           </div>
         </div>
 
-        {/* SDG Statistics Grid */}
+        {}
         <div className="sdg-stats-grid">
           {Object.entries(sdgStats)
-            .filter(([key, data]) => data.count > 0) // Only show SDGs with papers
-            .sort(([,a], [,b]) => b.count - a.count) // Sort by count descending
+            .filter(([key, data]) => data.count > 0)
+            .sort(([,a], [,b]) => b.count - a.count)
             .map(([key, data]) => (
               <div key={key} className="sdg-stat-card">
                 <div className="sdg-stat-header">

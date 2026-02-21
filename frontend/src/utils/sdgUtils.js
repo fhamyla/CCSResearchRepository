@@ -1,6 +1,4 @@
 // Copyright (c) 2025 fhamyla
-// Licensed under the MIT License.
-// SDG mapping utility
 export const SDG_MAPPING = {
   '1': 'SDG 1: No Poverty',
   '2': 'SDG 2: Zero Hunger',
@@ -21,7 +19,6 @@ export const SDG_MAPPING = {
   '17': 'SDG 17: Partnerships to achieve the Goal'
 };
 
-// SDG descriptions for tooltips
 export const SDG_DESCRIPTIONS = {
   '1': 'End poverty in all its forms everywhere. This goal aims to eradicate extreme poverty and ensure economic security for all people.',
   '2': 'End hunger, achieve food security and improved nutrition, and promote sustainable agriculture worldwide.',
@@ -42,31 +39,24 @@ export const SDG_DESCRIPTIONS = {
   '17': 'Strengthen the means of implementation and revitalize global partnerships for sustainable development.'
 };
 
-// Get all available SDGs in full format
 export const getAllSDGs = () => {
   return Object.values(SDG_MAPPING);
 };
 
-// Get SDG description for tooltip
 export const getSDGDescription = (sdgId) => {
   return SDG_DESCRIPTIONS[String(sdgId)] || 'Description not available';
 };
 
-// Convert SDG number to full text
 export const getSDGFullText = (sdgValue) => {
   if (!sdgValue) return 'Unknown SDG';
   
-  // Handle different formats
   let sdgNumber = sdgValue;
   
-  // If it's already in full format, return as is
   if (typeof sdgValue === 'string' && sdgValue.toLowerCase().includes('sdg') && sdgValue.includes(':')) {
     return sdgValue;
   }
   
-  // Extract number from various formats
   if (typeof sdgValue === 'string') {
-    // If it's just a number, use it directly
     if (/^\d+$/.test(sdgValue.trim())) {
       sdgNumber = sdgValue.trim();
     } else {
@@ -78,7 +68,6 @@ export const getSDGFullText = (sdgValue) => {
   } else if (typeof sdgValue === 'number') {
     sdgNumber = String(sdgValue);
   } else if (typeof sdgValue === 'object' && sdgValue !== null) {
-    // Handle object format
     if (sdgValue.name && typeof sdgValue.name === 'string' && 
         sdgValue.name.toLowerCase().includes('sdg') && sdgValue.name.includes(':')) {
       return sdgValue.name;
@@ -97,11 +86,9 @@ export const getSDGFullText = (sdgValue) => {
     }
   }
   
-  // Return full text or fallback
   return SDG_MAPPING[String(sdgNumber)] || `SDG ${sdgNumber}` || 'Unknown SDG';
 };
 
-// Extract SDG number from full text or various formats
 export const extractSDGNumber = (sdgValue) => {
   if (!sdgValue) return null;
   
@@ -113,17 +100,14 @@ export const extractSDGNumber = (sdgValue) => {
     str = String(sdgValue);
   }
   
-  // If it's already just a number, return it
   if (/^\d+$/.test(str.trim())) {
     return str.trim();
   }
   
-  // Extract number from text
   const match = str.match(/(\d+)/);
   return match ? match[1] : null;
 };
 
-// Check if two SDG values match (handles different formats)
 export const sdgMatches = (sdg1, sdg2) => {
   if (!sdg1 || !sdg2) return false;
   
@@ -138,7 +122,6 @@ export const sdgMatches = (sdg1, sdg2) => {
   }
 };
 
-// Normalize SDG for comparison
 export const normalizeSDG = (sdgValue) => {
   const number = extractSDGNumber(sdgValue);
   return number ? SDG_MAPPING[number] : null;

@@ -1,5 +1,4 @@
 // Copyright (c) 2025 fhamyla
-// Licensed under the MIT License.
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Homepage from './pages/Homepage';
@@ -23,10 +22,10 @@ function App() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/register" element={<Register />} />
           
-          {/* User Routes */}
+          {}
           <Route path="/manage-papers" element={<ManagePapers />} />
           
-          {/* Admin Routes */}
+          {}
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/manage-papers" element={<AdminManagePapers />} />
           <Route path="/admin/manage-users" element={<AdminManageUsers />} />

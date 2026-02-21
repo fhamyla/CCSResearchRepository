@@ -52,7 +52,7 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Alert Messages */
+
 .alert {
   padding: 16px 20px;
   margin-bottom: 20px;
@@ -103,7 +103,7 @@
   border-left-color: #3b82f6;
 }
 
-/* Table Section */
+
 .papers-table-section {
   background: #ffffff;
   border-radius: 12px;
@@ -140,7 +140,7 @@
   border-radius: 4px;
 }
 
-/* Table Styles */
+
 .papers-table-container {
   overflow-x: auto;
   margin-top: 20px;
@@ -240,7 +240,7 @@
   position: relative;
 }
 
-/* Highlight the edit button for co-authors */
+
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(66, 153, 225, 0.5);
@@ -253,7 +253,7 @@
   }
 }
 
-/* Hover effect for edit button */
+
 .edit-button:hover {
   animation: pulse 1.5s infinite;
 }
@@ -296,7 +296,7 @@
   margin-top: 3px;
 }
 
-/* Upload Button */
+
 .upload-button {
   background: linear-gradient(135deg, #800000 0%, #a94442 100%);
   color: white;
@@ -345,7 +345,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Empty State */
+
 .empty-state {
   text-align: center;
   padding: 60px 0;
@@ -369,7 +369,7 @@
   margin: 0 auto;
 }
 
-/* Loading State */
+
 .loading {
   text-align: center;
   padding: 60px 0;
@@ -397,7 +397,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Modal Styles */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -477,7 +477,7 @@
   transform: rotate(90deg);
 }
 
-/* Form Styles */
+
 .upload-form {
   padding: 24px;
   display: grid;
@@ -537,7 +537,7 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Drag and Drop File Upload */
+
 .file-upload-section {
   position: relative;
 }
@@ -669,7 +669,7 @@
   transform: rotate(90deg);
 }
 
-/* Multi-Input Sections */
+
 .multi-input-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -762,7 +762,7 @@
   transform: rotate(90deg);
 }
 
-/* SDG Section */
+
 .sdg-section {
   margin-bottom: 24px;
   background: #fafafa;
@@ -816,7 +816,7 @@
   font-weight: 500;
 }
 
-/* Enhanced tooltip styles for SDG items */
+
 .sdg-item[title] {
   position: relative;
 }
@@ -854,7 +854,7 @@
   margin-bottom: 2px;
 }
 
-/* Form Actions */
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -864,7 +864,7 @@
   border-top: 1px solid #e9ecef;
 }
 
-/* Responsive Adjustments */
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -902,7 +902,7 @@
   }
 }
 
-/* Author Table Styles */
+
 .author-input-container {
   margin-bottom: 15px;
 }
@@ -947,7 +947,7 @@
   z-index: 1;
 }
 
-/* Radio Button and Checkbox Styles */
+
 .radio-group,
 .checkbox-group {
   margin-bottom: 15px;
@@ -966,19 +966,19 @@
   margin-right: 5px;
 }
 
-/* Form Order - Elements stacked from top to bottom */
+
 .upload-form {
   display: flex;
   flex-direction: column;
 }
 
-/* File Upload Section - Now at the bottom */
+
 .file-upload-section {
   margin-top: 20px;
   order: 99;
 }
 
-/* Add these badge styles for ownership status */
+
 .badge {
   display: inline-block;
   padding: 0.25em 0.6em;
@@ -1006,17 +1006,17 @@
   background-color: #f8f9fa;
 }
 
-/* Highlight papers where user is a co-author */
+
 .co-author-row {
-  background-color: rgba(233, 242, 255, 0.5); /* Light blue background */
+  background-color: rgba(233, 242, 255, 0.5); 
   transition: background-color 0.3s ease;
 }
 
 .co-author-row:hover {
-  background-color: rgba(233, 242, 255, 0.8); /* Slightly darker on hover */
+  background-color: rgba(233, 242, 255, 0.8); 
 }
 
-/* Author Search Styles */
+
 .author-input-container {
   margin-bottom: 15px;
 }
@@ -1042,7 +1042,7 @@
 
 .search-input-container .form-input.search-input {
   width: 100%;
-  padding: 12px 16px 12px 42px; /* Add left padding for the search icon */
+  padding: 12px 16px 12px 42px; 
   font-size: 15px;
   border-radius: 8px;
   border: 2px solid #e0d5f0;
@@ -1148,4 +1148,4 @@
   margin-bottom: 15px;
 }
 
-/* Existing authors-table-container styles */
+

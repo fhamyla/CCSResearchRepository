@@ -1,26 +1,4 @@
-/*
-MIT License
 
-Copyright (c) 2025 fhamyla
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
@@ -46,7 +24,6 @@ const AdminManageUsers = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Check if current user is admin (only admins can access this page)
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (!userData) {
@@ -57,7 +34,7 @@ const AdminManageUsers = () => {
     try {
       const parsedUser = JSON.parse(userData);
       if (parsedUser.role !== 'admin') {
-        navigate('/admin/dashboard'); // Redirect moderators to dashboard
+        navigate('/admin/dashboard');
         return;
       }
       setCurrentUser(parsedUser);
@@ -66,7 +43,6 @@ const AdminManageUsers = () => {
     }
   }, [navigate]);
 
-  // Load all users and statistics
   const loadData = async () => {
     setLoading(true);
     try {
@@ -88,7 +64,6 @@ const AdminManageUsers = () => {
     loadData();
   }, []);
 
-  // Filter users based on search term and status
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.role.toLowerCase().includes(searchTerm.toLowerCase());
@@ -103,7 +78,6 @@ const AdminManageUsers = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Handle role change
   const handleRoleChange = async (userId, newRole) => {
     if (!window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
       return;
@@ -112,7 +86,7 @@ const AdminManageUsers = () => {
     try {
       await userService.updateUserRole(userId, newRole);
       setMessage('User role updated successfully');
-      loadData(); // Reload data
+      loadData();
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage('Error updating user role: ' + error.message);
@@ -120,7 +94,6 @@ const AdminManageUsers = () => {
     }
   };
 
-  // Handle status change
   const handleStatusChange = async (userId, newStatus) => {
     if (!window.confirm(`Are you sure you want to change this user's status to ${newStatus}?`)) {
       return;
@@ -129,7 +102,7 @@ const AdminManageUsers = () => {
     try {
       await userService.updateUserStatus(userId, newStatus);
       setMessage(`User ${newStatus} successfully`);
-      loadData(); // Reload data
+      loadData();
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage('Error updating user status: ' + error.message);
@@ -137,9 +110,7 @@ const AdminManageUsers = () => {
     }
   };
 
-  // Handle delete user
   const handleDeleteUser = async (userId, userEmail) => {
-    // Prevent admin from deleting themselves
     if (currentUser.id === userId) {
       setMessage('Error: You cannot delete your own account');
       setTimeout(() => setMessage(''), 5000);
@@ -153,7 +124,7 @@ const AdminManageUsers = () => {
     try {
       await userService.deleteUser(userId);
       setMessage('User deleted successfully');
-      loadData(); // Reload data
+      loadData();
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage('Error deleting user: ' + error.message);
@@ -187,7 +158,7 @@ const AdminManageUsers = () => {
           </div>
         )}
 
-        {/* Statistics */}
+        {}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon">
@@ -226,7 +197,7 @@ const AdminManageUsers = () => {
           </div>
         </div>
 
-        {/* Filters and Search */}
+        {}
         <div className="admin-card">
           <div className="filters-section">
             <div className="admin-form-group">
@@ -263,7 +234,7 @@ const AdminManageUsers = () => {
           </div>
         </div>
 
-        {/* Users Table */}
+        {}
         <div className="admin-card">
           <div className="admin-card-header">
             <h2 className="admin-card-title">
@@ -328,7 +299,7 @@ const AdminManageUsers = () => {
                           >
                             <option value="user">User</option>
                             <option value="moderator">Moderator</option>
-                            {/* Show admin option only if user is already admin (for display purposes) */}
+                            {}
                             {user.role === 'admin' && <option value="admin">Admin</option>}
                           </select>
                         </td>
@@ -353,7 +324,7 @@ const AdminManageUsers = () => {
           )}
         </div>
 
-        {/* Help Information */}
+        {}
         <div className="admin-card">
           <div className="admin-card-header">
             <h2 className="admin-card-title">
