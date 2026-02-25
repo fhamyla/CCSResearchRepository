@@ -4,6 +4,7 @@ const express = require('express');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
 const otpStorage = new Map();
@@ -18,8 +19,13 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-console.log('GMAIL:', process.env.GMAIL);
-console.log('GMAIL_PASSWORD:', process.env.GMAIL_PASSWORD);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many auth requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -34,7 +40,7 @@ const cleanExpiredOTPs = () => {
   }
 };
 
-router.post('/send-otp', async (req, res) => {
+router.post('/send-otp', authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -95,7 +101,7 @@ router.post('/send-otp', async (req, res) => {
   }
 });
 
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', authLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -127,7 +133,7 @@ router.post('/verify-otp', async (req, res) => {
   }
 });
 
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   try {
     const { email, password, firstName, lastName, phoneNumber, department, studentId } = req.body;
 
@@ -208,7 +214,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
