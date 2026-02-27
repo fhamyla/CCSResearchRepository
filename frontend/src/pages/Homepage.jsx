@@ -9,7 +9,6 @@ import {
   getAllSDGs,
   getSDGFullText,
   sdgMatches,
-  normalizeSDG,
 } from "../utils/sdgUtils";
 import {
   FiBarChart2,
@@ -39,7 +38,7 @@ const Homepage = () => {
   const [user, setUser] = useState(null);
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error] = useState("");
   const [selectedPaperId, setSelectedPaperId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState(null);
@@ -61,7 +60,6 @@ const Homepage = () => {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState("");
 
-  // define loader before it's used in effects
   const loadPapers = async () => {
     try {
       setLoading(true);
@@ -86,6 +84,7 @@ const Homepage = () => {
       }
     }
     loadPapers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   useEffect(() => {
@@ -244,6 +243,7 @@ const Homepage = () => {
       if (blob.size === 0) throw new Error("File is empty");
       const url = window.URL.createObjectURL(blob);
       setPreviewUrl(url);
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setPreviewError("Failed to load preview.");
     } finally {
@@ -359,7 +359,7 @@ const Homepage = () => {
   const sortedPapers = [...filteredPapers].sort((a, b) => {
     switch (sortBy) {
       case "Date":
-        const yearA =
+        { const yearA =
           typeof a.year === "object"
             ? a.year.value || a.year.id || 0
             : a.year || 0;
@@ -367,7 +367,7 @@ const Homepage = () => {
           typeof b.year === "object"
             ? b.year.value || b.year.id || 0
             : b.year || 0;
-        return parseInt(yearB) - parseInt(yearA);
+        return parseInt(yearB) - parseInt(yearA); }
       default:
         return 0;
     }
@@ -389,19 +389,13 @@ const Homepage = () => {
               <div className="nav-links">
                 {user.role === "user" ? (
                   <>
-                    <Link
-                      to="/manage-papers"
-                      className="nav-link"
-                    >
+                    <Link to="/manage-papers" className="nav-link">
                       <FiFileText size={16} /> My Submissions
                     </Link>
                   </>
                 ) : user.role === "moderator" ? (
                   <>
-                    <Link
-                      to="/manage-papers"
-                      className="nav-link"
-                    >
+                    <Link to="/manage-papers" className="nav-link">
                       <FiFileText size={16} /> My Submissions
                     </Link>
                     <button

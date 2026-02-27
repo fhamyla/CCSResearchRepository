@@ -23,9 +23,6 @@ const ManagePapers = () => {
   const [authorsList, setAuthorsList] = useState([]);
   const [keywordsList, setKeywordsList] = useState([]);
   const [selectedSDGs, setSelectedSDGs] = useState([]);
-  const [setCurrentAuthor] = useState("");
-  // eslint-disable-next-line no-empty-pattern
-  const [] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
   const [doi, setDoi] = useState("");
   const [message, setMessage] = useState("");
@@ -439,7 +436,6 @@ const ManagePapers = () => {
     setAuthorsList(initialAuthorsList);
     setKeywordsList([]);
     setSelectedSDGs([]);
-    setCurrentAuthor("");
     setCurrentKeyword("");
     setDoi("");
     setSelectedPaper(null);
@@ -835,15 +831,6 @@ const ManagePapers = () => {
 
   return (
     <div className="manage-papers-container">
-      {/* debug output */}
-      <div
-        style={{
-          padding: "8px",
-          background: "#fee",
-          color: "#900",
-          fontWeight: "bold",
-        }}
-      ></div>
       <div className="page-header">
         <button onClick={() => navigate(-1)} className="back-button">
           ← Back
